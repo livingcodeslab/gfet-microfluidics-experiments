@@ -22,13 +22,6 @@ def set_loggers_level(loggers, loglevel):
         logging.getLogger(logger_str).setLevel(loglevel)
 
 
-def build_filename(outdir: Path, file_prefix: str, index: int) -> Path:
-    if not outdir.exists():
-        outdir.mkdir()
-
-    return outdir.joinpath(f"{file_prefix}_{index:05}.csv")
-
-
 def write_results(filepath: Path, results: tuple[dict, ...]):
     # TODO: remove these debug statements
     logger.debug("Fieldnames: %s", list(results[0].keys()))
