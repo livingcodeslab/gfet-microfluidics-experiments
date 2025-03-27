@@ -2,11 +2,11 @@
 import csv
 import logging
 from pathlib import Path
-from argparse import ArgumentParser
+from argparse import Namespace, ArgumentParser
 
 from keithley2600 import Keithley2600
 
-from gfet.generic import float_range
+from gfet.cli import fetch_range_float
 from gfet.keithley import connect, select_visa_address
 from gfet.generic import float_range, range_length, build_filename
 
@@ -35,9 +35,7 @@ def write_results(filepath: Path, results: tuple[dict, ...]):
 
 def perform_experiment(
         inst: Keithley2600,
-        outdir: Path,
-        file_prefix: str,
-        line_frequency: int
+        args: Namespace
 ):
     # TODO: Do at least 3 readings for at least one of the FETs to stabilise the
     # chip.
@@ -57,11 +55,24 @@ def perform_experiment(
     #   - between 0.001 and 25*(1/{line-frequency})
     #   - Higher value == more accurate results, lower speed
     #   - Lower value == less accurate results, higher speed
-    integration_time = (0.001 + (1 / line_frequency)) / 2 # halfway between
+    integration_time = (0.001 + (1 / args.line_frequency)) / 2 # halfway between
     inst.set_integration_time(inst.smua, integration_time)
     inst.set_integration_time(inst.smub, integration_time)
-    # for idx, gate_voltage in enumerate(float_range(-1, 1, 0.001), start=1):
-    for idx, gate_voltage in enumerate(float_range(-1, 1, 0.1), start=1):
+
+    ### Device stabilization for liquid gating
+    logger.info("Device stabilisation started…")
+    inst.apply_voltage(inst.smua, 0.3)
+    inst.apply_voltage(inst.smub, 0.5)
+    for _ in range(0, 3):
+        inst.measure_voltage(inst.smua)
+        inst.measure_current(inst.smua)
+        inst.measure_voltage(inst.smub)
+        inst.measure_current(inst.smub)
+    logger.info("Device stabilisation completed.")
+    ### END: Device stabilization for liquid gating
+
+    _range, _len = range_length(float_range(*args.range))
+    for idx, gate_voltage in enumerate(_range, start=1):
         inst.apply_voltage(inst.smua, gate_voltage)
         results = tuple()
         # for drain_voltage in float_range(-1, 1, 0.00005):
@@ -75,7 +86,9 @@ def perform_experiment(
                 "drain_current": inst.measure_current(inst.smub)
             },)
 
-        write_results(build_filename(outdir, file_prefix, idx), results)
+        write_results(
+            build_filename(args.output_directory, args.file_prefix, idx, _len),
+            results)
 
     return 0
 
@@ -95,6 +108,11 @@ if __name__ == "__main__":
         parser.add_argument("--file-prefix",
                             type=str,
                             default="result")
+        parser.add_argument(
+            "--range", type=fetch_range_float, default=(-1.7, 1.7, 0.1),
+            help=("A comma-separated list of 2 or 3 float values. "
+                  "If 3 values are provided, the third is used as a step. "
+                  "If only 2 values are provided, the default step is 0.1"))
         parser.add_argument("--connection-retries",
                             type=int,
                             default=3)
@@ -120,9 +138,7 @@ if __name__ == "__main__":
         logger.debug(f"ARGS: %s", args)
         return perform_experiment(connect(args.visa_address,
                                           retries=args.connection_retries),
-                                  args.output_directory,
-                                  args.file_prefix,
-                                  args.line_frequency)
+                                  args)
 
 
     main()
