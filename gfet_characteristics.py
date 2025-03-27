@@ -78,12 +78,20 @@ def perform_experiment(
         # for drain_voltage in float_range(-1, 1, 0.00005):
         for drain_voltage in float_range(-1, 1, 0.005):
             inst.apply_voltage(inst.smub, drain_voltage)
+            measured_drain_voltage = inst.measure_voltage(inst.smub)
+            measured_drain_current = inst.measure_current(inst.smub)
+            if measured_drain_current == 0.0:
+                drain_resistance = ""
+            else:
+                drain_resistance = (
+                    (measured_drain_voltage/measured_drain_current) / 1000)
             results = results + ({
                 "x_axis": f"{drain_voltage:0.3}",
                 "gate_voltage": inst.measure_voltage(inst.smua),
                 "gate_current": inst.measure_current(inst.smua),
-                "drain_voltage": inst.measure_voltage(inst.smub),
-                "drain_current": inst.measure_current(inst.smub)
+                "drain_voltage": measured_drain_voltage,
+                "drain_current": measured_drain_current,
+                "drain_resistance": drain_resistance
             },)
 
         write_results(
