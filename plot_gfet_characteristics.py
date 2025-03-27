@@ -42,7 +42,8 @@ def plot_files(args: Namespace):
     _range, _len = range_length(float_range(*args.range))
     plot_args = [
         (f"'{build_filename(args.input_directory, args.file_prefix, idx, _len)}' "
-         f"using 'x_axis':'drain_current' title 'Gate Voltage {gate_voltage:0.3}V' "
+         "using 'x_axis':'drain_resistance' "
+         f"title 'Gate Voltage {gate_voltage:0.3}V' "
          "with linespoint")
         for idx, gate_voltage in enumerate(_range, start=1)]
 
