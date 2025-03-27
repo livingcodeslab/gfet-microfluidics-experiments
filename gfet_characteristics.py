@@ -144,6 +144,8 @@ if __name__ == "__main__":
             (_module_name_, "keithley2600.keithley_driver", "keithley_utils"),
             logger.getEffectiveLevel())
         logger.debug(f"ARGS: %s", args)
+        logger.info("Running with a range from %sV to %sV with a step of %s",
+                    *args.range)
         return perform_experiment(connect(args.visa_address,
                                           retries=args.connection_retries),
                                   args)
