@@ -24,3 +24,9 @@ def build_filename(
         padding = 2
 
     return outdir.joinpath(f"{file_prefix}_{index:0{padding}}.csv")
+
+
+def range_length(the_range: Iterator[float]) -> tuple[tuple[float, ...], int]:
+    """Compute the range and its length"""
+    _range = tuple(the_range)
+    return (_range, len(_range))

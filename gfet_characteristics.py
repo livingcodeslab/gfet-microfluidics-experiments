@@ -8,6 +8,7 @@ from keithley2600 import Keithley2600
 
 from gfet.generic import float_range
 from gfet.keithley import connect, select_visa_address
+from gfet.generic import float_range, range_length, build_filename
 
 _module_name_ = __name__
 logger = logging.getLogger(__name__)
