@@ -131,7 +131,7 @@ if __name__ == "__main__":
                                      "warning",
                                      "info",
                                      "debug"),
-                            default="warning")
+                            default="info")
         parser.add_argument("--line-frequency",
                             type=int,
                             choices=(50, 60),
