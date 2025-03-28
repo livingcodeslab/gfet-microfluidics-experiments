@@ -46,7 +46,7 @@ def plot_files(args: Namespace):
         (f"'{build_filename(args.input_directory, args.file_prefix, idx, _len)}' "
          "using 'x_axis':'drain_resistance' "
          f"title 'Gate Voltage {gate_voltage:0.3}V' "
-         "with linespoint")
+         "with lines")
         for idx, gate_voltage in enumerate(_range, start=1)]
 
     g.plot(*plot_args)
