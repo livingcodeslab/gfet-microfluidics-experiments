@@ -72,12 +72,12 @@ def perform_experiment(
     ### END: Device stabilization for liquid gating
 
     _range, _len = range_length(float_range(*args.range))
-    for idx, gate_voltage in enumerate(_range, start=1):
-        inst.apply_voltage(inst.smua, gate_voltage)
+    for idx, drain_voltage in enumerate(_range, start=1):
+        inst.apply_voltage(inst.smub, drain_voltage)
         results = tuple()
         # for drain_voltage in float_range(-1, 1, 0.00005):
-        for drain_voltage in float_range(-1, 1, 0.005):
-            inst.apply_voltage(inst.smub, drain_voltage)
+        for gate_voltage in _range:
+            inst.apply_voltage(inst.smua, gate_voltage)
             measured_drain_voltage = inst.measure_voltage(inst.smub)
             measured_drain_current = inst.measure_current(inst.smub)
             if measured_drain_current == 0.0:
@@ -86,7 +86,7 @@ def perform_experiment(
                 drain_resistance = (
                     (measured_drain_voltage/measured_drain_current) / 1000)
             results = results + ({
-                "x_axis": f"{drain_voltage:0.3}",
+                "x_axis": f"{gate_voltage:0.3}",
                 "gate_voltage": inst.measure_voltage(inst.smua),
                 "gate_current": inst.measure_current(inst.smua),
                 "drain_voltage": measured_drain_voltage,
