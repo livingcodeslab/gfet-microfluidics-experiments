@@ -35,7 +35,9 @@ def plot_files(args: Namespace):
           zrange='[* : *] noreverse writeback',
           cbrange='[* : *] noreverse writeback',
           rrange='[* : *] noreverse writeback',
-          colorbox='vertical origin screen 0.9, 0.2 size screen 0.05, 0.6 front noinvert bdefault')
+          colorbox='vertical origin screen 0.9, 0.2 size screen 0.05, 0.6 front noinvert bdefault',
+          xlabel='"V_D (V)"',
+          ylabel='"R (KΩ)" rotate')
 
     g.cmd("NO_ANIMATION = 1")
 
