@@ -47,7 +47,7 @@ def plot_files(args: Namespace):
     plot_args = [
         (f"'{build_filename(args.input_directory, args.file_prefix, idx, _len)}' "
          f"using 'x_axis':'{args.y_axis}' "
-         f"title 'Gate Voltage {gate_voltage:0.3}V' "
+         f"title 'Channel Voltage (V_D) {gate_voltage:0.3}V' "
          "with lines")
         for idx, gate_voltage in enumerate(_range, start=1)]
 
