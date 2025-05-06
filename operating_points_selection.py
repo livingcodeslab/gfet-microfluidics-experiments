@@ -38,7 +38,7 @@ def sweep_operating_points(inst: Keithley2600, args: Namespace):
     vds_operating_points = (0.01, 0.02, 0.05, 0.07)
     logger.debug("Operating points: %s", vds_operating_points)
     for idx, drain_voltage in enumerate(vds_operating_points, start=1):
-        logger.info("Setting drain voltage to %.2sV", drain_voltage)
+        logger.info("Setting drain voltage to %sV", drain_voltage)
         inst.apply_voltage(inst.smub, drain_voltage)
         results = tuple()
         for gate_voltage in _range:
