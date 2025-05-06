@@ -35,7 +35,7 @@ def sweep_operating_points(inst: Keithley2600, args: Namespace):
     ### END: Device stabilization for liquid gating
 
     _range, _len = range_length(float_range(-1.7, 1.7, 0.01))
-    vds_operating_points = (0.01, 0.02, 0.05, 0.07)
+    vds_operating_points = (-0.07, -0.05, -0.02, -0.01, 0.01, 0.02, 0.05, 0.07)
     logger.debug("Operating points: %s", vds_operating_points)
     for idx, drain_voltage in enumerate(vds_operating_points, start=1):
         logger.info("Setting drain voltage to %sV", drain_voltage)
