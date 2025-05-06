@@ -1,6 +1,11 @@
 """Generic utilities"""
+import csv
+import logging
 from pathlib import Path
 from typing import Union, Iterator
+
+logger = logging.getLogger(__name__)
+
 
 def float_range(
         low: Union[int, float],
@@ -30,3 +35,13 @@ def range_length(the_range: Iterator[float]) -> tuple[tuple[float, ...], int]:
     """Compute the range and its length"""
     _range = tuple(the_range)
     return (_range, len(_range))
+
+
+def write_results(filepath: Path, results: tuple[dict, ...]):
+    # TODO: remove these debug statements
+    logger.debug("Fieldnames: %s", list(results[0].keys()))
+    # END: TODO: remove these debug statements
+    with filepath.open("w") as outfile:
+        writer = csv.DictWriter(outfile, fieldnames=list(results[0].keys()))
+        writer.writeheader()
+        writer.writerows(results)

@@ -8,7 +8,11 @@ from keithley2600 import Keithley2600
 
 from gfet.cli import fetch_range_float
 from gfet.keithley import connect, select_visa_address
-from gfet.generic import float_range, range_length, build_filename
+from gfet.generic import (
+    float_range,
+    range_length,
+    write_results,
+    build_filename)
 
 _module_name_ = __name__
 logger = logging.getLogger(__name__)
@@ -21,16 +25,6 @@ logger.setLevel(logging.WARNING)
 def set_loggers_level(loggers, loglevel):
     for logger_str in loggers:
         logging.getLogger(logger_str).setLevel(loglevel)
-
-
-def write_results(filepath: Path, results: tuple[dict, ...]):
-    # TODO: remove these debug statements
-    logger.debug("Fieldnames: %s", list(results[0].keys()))
-    # END: TODO: remove these debug statements
-    with filepath.open("w") as outfile:
-        writer = csv.DictWriter(outfile, fieldnames=list(results[0].keys()))
-        writer.writeheader()
-        writer.writerows(results)
 
 
 def perform_experiment(
