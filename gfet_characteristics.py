@@ -14,6 +14,8 @@ from gfet.generic import (
     write_results,
     build_filename)
 
+from logging_utils import set_loggers_level
+
 _module_name_ = __name__
 logger = logging.getLogger(__name__)
 logHandler = logging.StreamHandler()
@@ -21,10 +23,6 @@ logHandler.setFormatter(logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s — %(message)s"))
 logger.addHandler(logHandler)
 logger.setLevel(logging.WARNING)
-
-def set_loggers_level(loggers, loglevel):
-    for logger_str in loggers:
-        logging.getLogger(logger_str).setLevel(loglevel)
 
 
 def perform_experiment(
