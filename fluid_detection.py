@@ -30,52 +30,67 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s — %(message)s")
 
 
-def select_microfluidics_device_port(**kwargs) -> serial.Serial:
-    """Enable selection of serial port.
-
-    Take all the arguments to serial.Serial except `port` as keyword arguments
-    and passes them on."""
-    _kwargs = copy.deepcopy(kwargs)
-    remove_empty = _kwargs.pop("remove_empty", True)
-    print("Port#\tDevice")
+def list_serial_ports(show_all: bool = False):
+    """Print out a list of serial ports."""
+    headings = ("Path", "Details")
+    print(f"{headings[0]:20}\t{headings[1]}")
     ports = serial.tools.list_ports.comports()
-    if remove_empty:
+    if not show_all:
         ports = [port for port in ports
                  if any((port.product, port.manufacturer, port.vid, port.pid))]
-    for idx, port in enumerate(ports, start=1):
+    for port in ports:
         print(
-            f"{idx:4}:\t{port.device} => {port.manufacturer}:"
+            f"{port.device:20}\t{port.manufacturer}:"
             f"{port.product} ({port.vid}:{port.pid})")
 
-    try:
-        selection = int(input(
-            "Choose your microfluidics device "
-            f"('Port#': {1} to {len(ports)}): "))
-        assert( 0 < selection <= len(ports)), "Invalid selection."
-        return serial.Serial(
-            ports[selection - 1].device,
-            **_kwargs)
-    except (ValueError, AssertionError) as _exc:
-        print("You made an invalid selection. Exiting!", file=sys.stderr)
-        print(_exc)
-    sys.exit(1)
+
+def list_visa_addresses(show_all: bool = False):
+    print("Would list VISA addresses!")
 
 
-def start_smu(smu: Keithley2600, filename, V_ds: float = 0.05):
+def start_smu(
+        smu: Keithley2600,
+        filepath: Path,
+        drain_voltage: float = 0.05,
+        gate_voltage: float = 1.00
+):
     """Connect to the Source Measure Unit (SMU) and record values until stopped."""
     stop_event = threading.Event()
 
+    # === Setup SMU === #
+    integration_time = (0.001 + (1 / args.line_frequency)) / 2 # halfway between
+    inst.set_integration_time(inst.smua, integration_time)
+    inst.set_integration_time(inst.smub, integration_time)
+    device_stabilisation(smu)
+
+    # Operation points
+    smu.apply_voltage(smu.smua, gate_voltage)  # set gate voltage
+    smu.apply_voltage(smu.smub, drain_voltage) # set drain voltage
+    # ================= #
+
     def run_smu():
         """Run this in a thread."""
-        # TODO: open file here
-        # TODO: Set operating points here
         _i = 0
+        _results = []
         while not stop_event.is_set():
-            # TODO: Read time/instance, voltage, current, resistance here and record to file
-            print(f"still running {_i:07} …")
-            time.sleep(0.5)
+            drain_v, drain_c = (
+                smu.measure_voltage(inst.smub),
+                smu.measure_current(inst.smub))
+            _reading = {
+                "t": _i,
+                "drain_voltage": drain_v,
+                "drain_current": drain_c,
+                "drain_resistance": (
+                    "" if drain_c == 0.0 else ((drain_v/drain_c)/1000)),
+                "gate_voltage": inst.measure_voltage(inst.smua),
+                "gate_current": inst.measure_current(inst.smua),
+            }
+            _results.push(_reading)
             _i = _i + 1
             pass
+
+            write_results(filepath, _results)
+
         # TODO: Any necessary cleanup
 
     def stop_smu():
@@ -147,33 +162,51 @@ def reset_microfluidics_device(mfd_port: serial.Serial):
     logger.info("==================================")
 
 
-def run_fluid_detection_loop(mfd_port: serial.Serial, smu: Keithley2600):
+def run_fluid_detection_loop(mfd_port: serial.Serial, smu: Keithley2600, output_directory: Path):
     """Run the fluid detection loop."""
     logger.info("=== Fluid detection loop ===")
-    # logger.info("Begin fluid-detection loop")
-    # for chan in REAGENT_CHANNELS:
-    #     stop, thrd = start_smu(
-    #         smu,
-    #         Path(f"/tmp/signals_channel{chan.value:02}.txt"))
-    #     print(f"Collecting plug for reagent {chan.value}")
-    #     collect(mcf_port, chan) # collect/waste reagent plug
-    #     print(f"Pushing reagent {chan.value} out to waste")
-    #     vent_chip2waste(mcf_port)# vent to collection/waste
-    #     stop() # stop SMU
-    #     thrd.join() # Wait for graceful shutdown
+    output_directory.mkdir(exist_ok=True)
+    for chan in REAGENT_CHANNELS:
+        stop, thrd = start_smu(
+            smu,
+            output_directory.joinpath("{chan.value:02}.txt"))
+        print(f"Collecting plug for reagent {chan.value}")
+        collect(mcf_port, chan) # collect/waste reagent plug
+        print(f"Pushing reagent {chan.value} out to waste")
+        vent_chip2waste(mcf_port)# vent to collection/waste
+        stop() # stop SMU
+        thrd.join() # Wait for graceful shutdown
     logger.info("============================")
         
 
-def run():
+def run(mfd_port: serial.Serial, smu: Keithley2600, outdir: Path):
+    """Run the fluid-detection logic."""
     logger.info("Device selection")
     mfd_port = select_microfluidics_device_port()
     smu = connect(select_visa_address())
 
     initialise_microfluidics_device(mfd_port)
-    run_fluid_detection_loop(mfd_port, smu)
+    run_fluid_detection_loop(mfd_port, smu, outdir)
     reset_microfluidics_device(mfd_port)
 
     # print("would plot values for each channel …")
+    return 0
+
+
+def dispatch_subcommand(args) -> int:
+    """Dispatch the correct sub-command"""
+    logger.debug("Command-line Arguments: %s", args)
+    match args.command:
+        case "list-serial-ports":
+            list_serial_ports(args.show_all)
+        case "list-visa-addresses":
+            list_visa_addresses(args.show_all)
+        case "run-fluid-detection":
+            return run(
+                serial.Serial(args.microfluidics_serial_device),
+                Keithley2600(smu_visa_address),
+                args.output_directory)
+
     return 0
 
 
@@ -181,9 +214,6 @@ if __name__ == "__main__":
     def main():
         """Script entry pont"""
         parser = ArgumentParser("Fluid Detection")
-        parser.add_argument("--output-directory",
-                            type=Path,
-                            default=Path("/tmp"))
         parser.add_argument("--log-level",
                             type=str,
                             choices=("critical",
@@ -192,12 +222,56 @@ if __name__ == "__main__":
                                      "info",
                                      "debug"),
                             default="info")
-        args = parser.parse_args()
 
+        subcommands = parser.add_subparsers(
+            dest='command',
+            help='Available commands',
+            required=True)
+
+        list_serial = subcommands.add_parser(
+            "list-serial-ports",
+            description="List the serial ports available on the system")
+        list_serial.add_argument(
+            "--show-all",
+            help=("We show only serial ports with vendor ID values by default. "
+                  "To see all ports, pass this flag."),
+            action="store_true")
+
+        list_visa_addresses = subcommands.add_parser(
+            "list-visa-addresses",
+            description="List the VISA addresse available on the system")
+        list_visa_addresses.add_argument(
+            "--show-all",
+            help=("We show only VISA addresses with actual devices attached. "),
+            action="store_true")
+
+        run_fluid_detection = subcommands.add_parser(
+            "run-fluid-detection",
+            description="List the VISA addresse available on the system")
+        run_fluid_detection.add_argument(
+            "--microfluidics-serial-device",
+            type=str,
+            default="/dev/ttyACM0",
+            help=(
+                "The serial port path to the system device that grants access "
+                "to the microfluidics device. Default (/dev/ttyACM0)"))
+        run_fluid_detection.add_argument(
+            "--smu-visa-address",
+            type=str,
+            default="ASRL/dev/ttyUSB0::INSTR",
+            help=(
+                "The VISA address to the source-measure unit. "
+                "Default (ASRL/dev/ttyUSB0::INSTR)"))
+        run_fluid_detection.add_argument(
+            "output-directory",
+            type=Path,
+            help=("Output directory where this program will put the results "
+                  "files."))
+
+        args = parser.parse_args()
         logger.setLevel(getattr(logging, args.log_level.upper()))
         set_loggers_level(('microfluidics',),
                           logger.getEffectiveLevel())
-
-        return run()
+        return dispatch_subcommand(args)
 
     main()
