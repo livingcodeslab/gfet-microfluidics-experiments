@@ -12,7 +12,8 @@ import pyvisa
 import serial.tools.list_ports
 from keithley2600 import Keithley2600
 
-from gfet.keithley import connect, select_visa_address
+from gfet.generic import write_results
+from gfet.keithley import connect, select_visa_address, device_stabilisation
 
 from logging_utils import set_loggers_level
 from microfluidics import (collect,
