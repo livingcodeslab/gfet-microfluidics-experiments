@@ -127,7 +127,7 @@ def collect(port, channel: Channel, seconds: int = 25, rpm: int = 36) -> bool:
         f"Invalid channel: {channel}")
     return send_and_wait_for_response(
         port,
-        compile_command("COLLECT", "", channel, seconds, rpm))
+        compile_command("COLLECT", "-C", channel, seconds, rpm))
 
 
 def vent_chip2collection(port, seconds: int = 25, rpm: int = 36) -> bool:
