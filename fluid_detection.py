@@ -91,7 +91,7 @@ def start_smu(
                 "gate_voltage": smu.measure_voltage(smu.smua),
                 "gate_current": smu.measure_current(smu.smua),
             }
-            _results.push(_reading)
+            _results.append(_reading)
             _i = _i + 1
             pass
 
