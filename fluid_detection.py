@@ -217,7 +217,7 @@ def dispatch_subcommand(args) -> int:
 if __name__ == "__main__":
     def main():
         """Script entry pont"""
-        parser = ArgumentParser("Fluid Detection")
+        parser = ArgumentParser("fluid_detection")
         parser.add_argument("--log-level",
                             type=str,
                             choices=("critical",
