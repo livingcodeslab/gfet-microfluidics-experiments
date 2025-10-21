@@ -49,3 +49,16 @@ def connect(
         retry = retry + 1
 
     return inst
+
+
+def device_stabilisation(inst: Keithley2600):
+    """Stabilise device."""
+    logger.info("=== Device stabilisation ===")
+    inst.apply_voltage(inst.smua, 0.3)
+    inst.apply_voltage(inst.smub, 0.5)
+    for _ in range(0, 3):
+        inst.measure_voltage(inst.smua)
+        inst.measure_current(inst.smua)
+        inst.measure_voltage(inst.smub)
+        inst.measure_current(inst.smub)
+    logger.info("============================")
