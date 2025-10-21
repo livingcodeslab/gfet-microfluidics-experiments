@@ -197,7 +197,6 @@ def run(
         line_frequency: int
 ) -> int:
     """Run the fluid-detection logic."""
-    initialise_microfluidics_device(mfd_port)
     run_fluid_detection_loop(mfd_port, smu, outdir, line_frequency)
     reset_microfluidics_device(mfd_port)
 
@@ -213,6 +212,9 @@ def dispatch_subcommand(args) -> int:
             list_serial_ports(args.show_all)
         case "list-visa-addresses":
             list_visa_addresses(args.show_all)
+        case "initialise-microfluidics-device":
+            initialise_microfluidics_device(
+                serial.Serial(args.microfluidics_serial_device))
         case "run-fluid-detection":
             return run(
                 serial.Serial(args.microfluidics_serial_device),
@@ -287,6 +289,18 @@ if __name__ == "__main__":
             help=("Output directory where this program will put the results "
                   "files."))
 
+        init_mfd = subcommands.add_parser(
+            "initialise-microfluidics-device",
+            description=(
+                "Run initialisation on microfluidics device to ensure its in a "
+                "usable state."))
+        init_mfd.add_argument(
+            "--microfluidics-serial-device",
+            type=str,
+            default="/dev/ttyACM0",
+            help=(
+                "The serial port path to the system device that grants access "
+                "to the microfluidics device. Default (/dev/ttyACM0)"))
         args = parser.parse_args()
         logger.setLevel(getattr(logging, args.log_level.upper()))
         set_loggers_level(('microfluidics',),
