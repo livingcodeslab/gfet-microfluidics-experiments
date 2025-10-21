@@ -63,9 +63,9 @@ def start_smu(
     stop_event = threading.Event()
 
     # === Setup SMU === #
-    inst.set_integration_time(inst.smua, integration_time)
-    inst.set_integration_time(inst.smub, integration_time)
     integration_time = (0.001 + (1 / line_frequency)) / 2 # halfway between
+    smu.set_integration_time(smu.smua, integration_time)
+    smu.set_integration_time(smu.smub, integration_time)
     device_stabilisation(smu)
 
     # Operation points
@@ -79,16 +79,16 @@ def start_smu(
         _results = []
         while not stop_event.is_set():
             drain_v, drain_c = (
-                smu.measure_voltage(inst.smub),
-                smu.measure_current(inst.smub))
+                smu.measure_voltage(smu.smub),
+                smu.measure_current(smu.smub))
             _reading = {
                 "t": _i,
                 "drain_voltage": drain_v,
                 "drain_current": drain_c,
                 "drain_resistance": (
                     "" if drain_c == 0.0 else ((drain_v/drain_c)/1000)),
-                "gate_voltage": inst.measure_voltage(inst.smua),
-                "gate_current": inst.measure_current(inst.smua),
+                "gate_voltage": smu.measure_voltage(smu.smua),
+                "gate_current": smu.measure_current(smu.smua),
             }
             _results.push(_reading)
             _i = _i + 1
