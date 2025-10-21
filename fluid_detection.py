@@ -182,9 +182,9 @@ def run_fluid_detection_loop(
             output_directory.joinpath(f"{chan.value:02}.txt"),
             line_frequency)
         print(f"Collecting plug for reagent {chan.value}")
-        collect(mcf_port, chan) # collect/waste reagent plug
+        collect(mfd_port, chan, seconds=5) # collect/waste reagent plug
         print(f"Pushing reagent {chan.value} out to waste")
-        vent_chip2waste(mcf_port)# vent to collection/waste
+        vent_chip2waste(mfd_port, seconds=120)# vent to collection/waste
         stop() # stop SMU
         thrd.join() # Wait for graceful shutdown
     logger.info("============================")
