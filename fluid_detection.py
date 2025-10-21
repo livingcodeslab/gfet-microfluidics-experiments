@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 from argparse import Namespace, ArgumentParser
 
+import pyvisa
 import serial.tools.list_ports
 from keithley2600 import Keithley2600
 
@@ -45,7 +46,10 @@ def list_serial_ports(show_all: bool = False):
 
 
 def list_visa_addresses(show_all: bool = False):
-    print("Would list VISA addresses!")
+    resources = pyvisa.ResourceManager().list_resources()
+    print("The available VISA addresses are: ")
+    for address in resources:
+        print(address)
 
 
 def start_smu(
