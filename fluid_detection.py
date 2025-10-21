@@ -179,7 +179,7 @@ def run_fluid_detection_loop(
     for chan in REAGENT_CHANNELS:
         stop, thrd = start_smu(
             smu,
-            output_directory.joinpath("{chan.value:02}.txt"),
+            output_directory.joinpath(f"{chan.value:02}.txt"),
             line_frequency)
         print(f"Collecting plug for reagent {chan.value}")
         collect(mcf_port, chan) # collect/waste reagent plug
