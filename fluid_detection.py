@@ -55,6 +55,7 @@ def list_visa_addresses(show_all: bool = False):
 def start_smu(
         smu: Keithley2600,
         filepath: Path,
+        line_frequency: int,
         drain_voltage: float = 0.05,
         gate_voltage: float = 1.00
 ):
@@ -62,9 +63,9 @@ def start_smu(
     stop_event = threading.Event()
 
     # === Setup SMU === #
-    integration_time = (0.001 + (1 / args.line_frequency)) / 2 # halfway between
     inst.set_integration_time(inst.smua, integration_time)
     inst.set_integration_time(inst.smub, integration_time)
+    integration_time = (0.001 + (1 / line_frequency)) / 2 # halfway between
     device_stabilisation(smu)
 
     # Operation points
@@ -166,14 +167,19 @@ def reset_microfluidics_device(mfd_port: serial.Serial):
     logger.info("==================================")
 
 
-def run_fluid_detection_loop(mfd_port: serial.Serial, smu: Keithley2600, output_directory: Path):
+def run_fluid_detection_loop(
+        mfd_port: serial.Serial,
+        smu: Keithley2600,
+        output_directory: Path,
+        line_frequency: int):
     """Run the fluid detection loop."""
     logger.info("=== Fluid detection loop ===")
     output_directory.mkdir(exist_ok=True)
     for chan in REAGENT_CHANNELS:
         stop, thrd = start_smu(
             smu,
-            output_directory.joinpath("{chan.value:02}.txt"))
+            output_directory.joinpath("{chan.value:02}.txt"),
+            line_frequency)
         print(f"Collecting plug for reagent {chan.value}")
         collect(mcf_port, chan) # collect/waste reagent plug
         print(f"Pushing reagent {chan.value} out to waste")
@@ -183,14 +189,15 @@ def run_fluid_detection_loop(mfd_port: serial.Serial, smu: Keithley2600, output_
     logger.info("============================")
         
 
-def run(mfd_port: serial.Serial, smu: Keithley2600, outdir: Path):
+def run(
+        mfd_port: serial.Serial,
+        smu: Keithley2600,
+        outdir: Path,
+        line_frequency: int
+) -> int:
     """Run the fluid-detection logic."""
-    logger.info("Device selection")
-    mfd_port = select_microfluidics_device_port()
-    smu = connect(select_visa_address())
-
     initialise_microfluidics_device(mfd_port)
-    run_fluid_detection_loop(mfd_port, smu, outdir)
+    run_fluid_detection_loop(mfd_port, smu, outdir, line_frequency)
     reset_microfluidics_device(mfd_port)
 
     # print("would plot values for each channel …")
@@ -208,8 +215,9 @@ def dispatch_subcommand(args) -> int:
         case "run-fluid-detection":
             return run(
                 serial.Serial(args.microfluidics_serial_device),
-                Keithley2600(smu_visa_address),
-                args.output_directory)
+                Keithley2600(args.smu_visa_address),
+                args.output_directory,
+                args.line_frequency)
 
     return 0
 
@@ -267,8 +275,14 @@ if __name__ == "__main__":
                 "The VISA address to the source-measure unit. "
                 "Default (ASRL/dev/ttyUSB0::INSTR)"))
         run_fluid_detection.add_argument(
-            "output-directory",
+            "--line-frequency",
+            type=int,
+            choices=(50, 60),
+            default=60)
+        run_fluid_detection.add_argument(
+            "output_directory",
             type=Path,
+            metavar="output-directory",
             help=("Output directory where this program will put the results "
                   "files."))
 
