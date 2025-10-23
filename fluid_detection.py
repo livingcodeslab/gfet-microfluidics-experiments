@@ -216,12 +216,12 @@ def dispatch_subcommand(args) -> int:
             list_visa_addresses(args.show_all)
         case "initialise-microfluidics-device":
             initialise_microfluidics_device(
-                serial.Serial(args.microfluidics_serial_device))
+                serial.Serial(args.microfluidics_serial_port))
         case "initialise-source-measure-unit":
             init_smu(args.smu_visa_address, args.line_frequency)
         case "run-fluid-detection":
             return run(
-                serial.Serial(args.microfluidics_serial_device),
+                serial.Serial(args.microfluidics_serial_port),
                 Keithley2600(args.smu_visa_address),
                 args.output_directory)
 
@@ -267,7 +267,7 @@ if __name__ == "__main__":
             "run-fluid-detection",
             description="List the VISA addresse available on the system")
         run_fluid_detection.add_argument(
-            "--microfluidics-serial-device",
+            "--microfluidics-serial-port",
             type=str,
             default="/dev/ttyACM0",
             help=(
@@ -293,7 +293,7 @@ if __name__ == "__main__":
                 "Run initialisation on microfluidics device to ensure its in a "
                 "usable state."))
         init_mfd.add_argument(
-            "--microfluidics-serial-device",
+            "--microfluidics-serial-port",
             type=str,
             default="/dev/ttyACM0",
             help=(
