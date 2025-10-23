@@ -56,18 +56,11 @@ def list_visa_addresses(show_all: bool = False):
 def start_smu(
         smu: Keithley2600,
         filepath: Path,
-        line_frequency: int,
         drain_voltage: float = 0.05,
         gate_voltage: float = 1.00
 ):
     """Connect to the Source Measure Unit (SMU) and record values until stopped."""
     stop_event = threading.Event()
-
-    # === Setup SMU === #
-    integration_time = (0.001 + (1 / line_frequency)) / 2 # halfway between
-    smu.set_integration_time(smu.smua, integration_time)
-    smu.set_integration_time(smu.smub, integration_time)
-    device_stabilisation(smu)
 
     # Operation points
     smu.apply_voltage(smu.smua, gate_voltage)  # set gate voltage
@@ -171,8 +164,7 @@ def reset_microfluidics_device(mfd_port: serial.Serial):
 def run_fluid_detection_loop(
         mfd_port: serial.Serial,
         smu: Keithley2600,
-        output_directory: Path,
-        line_frequency: int):
+        output_directory: Path):
     """Run the fluid detection loop."""
     logger.info("=== Fluid detection loop ===")
     output_directory.mkdir(exist_ok=True)
@@ -193,15 +185,25 @@ def run_fluid_detection_loop(
 def run(
         mfd_port: serial.Serial,
         smu: Keithley2600,
-        outdir: Path,
-        line_frequency: int
+        outdir: Path
 ) -> int:
     """Run the fluid-detection logic."""
-    run_fluid_detection_loop(mfd_port, smu, outdir, line_frequency)
+    run_fluid_detection_loop(mfd_port, smu, outdir)
     reset_microfluidics_device(mfd_port)
 
     # print("would plot values for each channel …")
     return 0
+
+
+def init_smu(visa_address, line_frequency):
+    """Initialize the Source-Measure Unit device."""
+    smu = Keithley2600(visa_address)
+
+    device_stabilisation(smu)
+
+    integration_time = (0.001 + (1 / line_frequency)) / 2 # halfway between
+    smu.set_integration_time(smu.smua, integration_time)
+    smu.set_integration_time(smu.smub, integration_time)
 
 
 def dispatch_subcommand(args) -> int:
@@ -215,12 +217,13 @@ def dispatch_subcommand(args) -> int:
         case "initialise-microfluidics-device":
             initialise_microfluidics_device(
                 serial.Serial(args.microfluidics_serial_device))
+        case "initialise-source-measure-unit":
+            init_smu(args.smu_visa_address, args.line_frequency)
         case "run-fluid-detection":
             return run(
                 serial.Serial(args.microfluidics_serial_device),
                 Keithley2600(args.smu_visa_address),
-                args.output_directory,
-                args.line_frequency)
+                args.output_directory)
 
     return 0
 
@@ -278,11 +281,6 @@ if __name__ == "__main__":
                 "The VISA address to the source-measure unit. "
                 "Default (ASRL/dev/ttyUSB0::INSTR)"))
         run_fluid_detection.add_argument(
-            "--line-frequency",
-            type=int,
-            choices=(50, 60),
-            default=60)
-        run_fluid_detection.add_argument(
             "output_directory",
             type=Path,
             metavar="output-directory",
@@ -301,6 +299,25 @@ if __name__ == "__main__":
             help=(
                 "The serial port path to the system device that grants access "
                 "to the microfluidics device. Default (/dev/ttyACM0)"))
+
+        init_smu = subcommands.add_parser(
+            "initialise-source-measure-unit",
+            description=(
+                "Run initialisation on the Source-Measure Unit device to ensure"
+                "it is in a usable state."))
+        init_smu.add_argument(
+            "--line-frequency",
+            type=int,
+            choices=(50, 60),
+            default=60)
+        init_smu.add_argument(
+            "--smu-visa-address",
+            type=str,
+            default="ASRL/dev/ttyUSB0::INSTR",
+            help=(
+                "The Virtual Instument Software Architecture (VISA) address "
+                "to connect to the source-measure unit."))
+
         args = parser.parse_args()
         logger.setLevel(getattr(logging, args.log_level.upper()))
         set_loggers_level(('microfluidics',),
