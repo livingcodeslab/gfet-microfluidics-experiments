@@ -290,8 +290,8 @@ if __name__ == "__main__":
         init_mfd = subcommands.add_parser(
             "initialise-microfluidics-device",
             description=(
-                "Run initialisation on microfluidics device to ensure its in a "
-                "usable state."))
+                "Run initialisation on microfluidics device to ensure it is in "
+                "a usable state."))
         init_mfd.add_argument(
             "--microfluidics-serial-port",
             type=str,
