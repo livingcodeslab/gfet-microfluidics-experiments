@@ -241,7 +241,7 @@ def dispatch_subcommand(args) -> int:
             initialise_smu(
                 args.smu_visa_address,
                 args.line_frequency,
-                integration_time = (0.001 + (1 / line_frequency)) / 2 # halfway between
+                ((0.001 + 25) / 2) # halfway between
             )
         case "plot-file":
             plot_file(args.inputfile,

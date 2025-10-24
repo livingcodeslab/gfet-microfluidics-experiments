@@ -64,13 +64,30 @@ def device_stabilisation(inst: Keithley2600):
     logger.info("============================")
 
 
-def initialise_smu(
-        visa_address, line_frequency, integration_time: float) -> Keithley2600:
+def initialise_smu(visa_address, line_frequency: int, nplc: float) -> Keithley2600:
     """Initialize the Source-Measure Unit device."""
     smu = Keithley2600(visa_address)
 
-    smu.set_integration_time(smu.smua, integration_time)
-    smu.set_integration_time(smu.smub, integration_time)
+    _int_time_ = __integration_time__(line_frequency, nplc)
+    smu.set_integration_time(smu.smua, _int_time_)
+    smu.set_integration_time(smu.smub, _int_time_)
     device_stabilisation(smu)
 
     return smu
+
+
+def __integration_time__(line_frequency: int, nplc: float) -> float:
+    """Compute the integration time.
+
+    Arguments:
+    line_frequency -- the AC line frequency (50 or 60)
+    nplc -- number of power line cycles. Range [0.001, 25]
+    """
+    if line_frequency not in (50, 60):
+        raise ValueError(
+            "`line_frequency` must be either 50 or 60.")
+    if nplc < 0.001 or nplc > 25:
+        raise ValueError(
+            "`nplc` must be greater than or equal to 0.001 and less than or "
+            "equal to 25.")
+    return nplc * (1 / line_frequency)
