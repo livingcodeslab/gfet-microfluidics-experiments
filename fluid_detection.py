@@ -23,6 +23,7 @@ from microfluidics import (collect,
                            vent_common,
                            vent_chip2waste,
                            REAGENT_CHANNELS,
+                           vent_chip2collection,
                            prime_wash_to_channel,
                            prime_reagent_to_channel)
 
@@ -86,7 +87,6 @@ def start_smu(
             }
             _results.append(_reading)
             _i = _i + 1
-            pass
 
             write_results(filepath, _results)
 
