@@ -9,6 +9,7 @@ from typing import Optional
 from argparse import Namespace, ArgumentParser
 
 import pyvisa
+from pygnuplot import gnuplot
 import serial.tools.list_ports
 from keithley2600 import Keithley2600
 
@@ -211,6 +212,37 @@ def init_smu(visa_address, line_frequency):
     smu.set_integration_time(smu.smub, integration_time)
 
 
+def plot_file(infile, outfile, plottitle, yaxis, ylabel):
+    g = gnuplot.Gnuplot(log=True)
+    g.set(terminal='svg font "arial,10" fontscale 1.0 size 1200,1000 dynamic background rgb "white"',
+          #terminal='pngcairo font "arial,10" fontscale 1.0 size 1000, 800',
+          # output='"testplot.1.png"',
+          output=f'"{outfile}"',
+          key="fixed left top horizontal Right noreverse enhanced autotitle box lt black linewidth 1.000 dashtype solid",
+          # samples="50, 50",
+          title=f'"{plottitle}" font ",20" textcolor lt -1 norotate',
+          datafile='separator ","',
+          # xtics=0.005,
+          xrange='[* : *] noreverse writeback',
+          # x2range='[* : *] noreverse writeback',
+          yrange='[* : *] noreverse writeback',
+          # y2range='[* : *] noreverse writeback',
+          zrange='[* : *] noreverse writeback',
+          cbrange='[* : *] noreverse writeback',
+          rrange='[* : *] noreverse writeback',
+          colorbox='vertical origin screen 0.9, 0.2 size screen 0.05, 0.6 front noinvert bdefault',
+          xlabel='"Time"',
+          ylabel=f'"{ylabel}" rotate')
+
+    g.cmd("NO_ANIMATION = 1")
+    plot_args = [
+        f"'{infile}' "
+        f"using 't':'{yaxis}' "
+        f"title 'some title' "
+        "with lines"]
+    g.plot(*plot_args)
+
+
 def dispatch_subcommand(args) -> int:
     """Dispatch the correct sub-command"""
     logger.debug("Command-line Arguments: %s", args)
@@ -224,6 +256,12 @@ def dispatch_subcommand(args) -> int:
                 serial.Serial(args.microfluidics_serial_port))
         case "initialise-source-measure-unit":
             init_smu(args.smu_visa_address, args.line_frequency)
+        case "plot-file":
+            plot_file(args.inputfile,
+                      args.outputfile,
+                      args.plottitle,
+                      args.yaxis,
+                      args.ylabel)
         case "run-fluid-detection":
             return run(
                 serial.Serial(args.microfluidics_serial_port),
@@ -323,10 +361,48 @@ if __name__ == "__main__":
                 "The Virtual Instument Software Architecture (VISA) address "
                 "to connect to the source-measure unit."))
 
+        plotter = subcommands.add_parser(
+            "plot-file",
+            description="Produce plot of data in file.")
+        plotter.add_argument(
+            "inputfile",
+            type=Path,
+            help="Path to file with data to plot")
+        plotter.add_argument(
+            "outputfile",
+            type=Path,
+            help="Path to output plot")
+        plotter.add_argument(
+            "--plottitle",
+            type=str,
+            help="A name for your plot.",
+            default="Fluid Detection: Resistance Characteristics")
+        plotter.add_argument(
+            "--xaxis",
+            type=str,
+            help="Field in file to use as X axis",
+            default="t")
+        plotter.add_argument(
+            "--xlabel",
+            type=str,
+            help="Label for X axis",
+            default="Time")
+        plotter.add_argument(
+            "--yaxis",
+            type=str,
+            help="Field in file to use as Y axis",
+            default="drain_resistance")
+        plotter.add_argument(
+            "--ylabel",
+            type=str,
+            help="Label for Y axis",
+            default="Drain Resistance (Ω)")
+
         args = parser.parse_args()
         logger.setLevel(getattr(logging, args.log_level.upper()))
         set_loggers_level(('microfluidics',),
                           logger.getEffectiveLevel())
+
         return dispatch_subcommand(args)
 
     main()
