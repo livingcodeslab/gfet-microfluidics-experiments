@@ -254,6 +254,9 @@ def dispatch_subcommand(args) -> int:
         case "initialise-microfluidics-device":
             initialise_microfluidics_device(
                 serial.Serial(args.microfluidics_serial_port))
+        case "reset-microfluidics-device":
+            reset_microfluidics_device(
+                serial.Serial(args.microfluidics_serial_port))
         case "initialise-source-measure-unit":
             init_smu(args.smu_visa_address, args.line_frequency)
         case "plot-file":
@@ -336,6 +339,17 @@ if __name__ == "__main__":
                 "Run initialisation on microfluidics device to ensure it is in "
                 "a usable state."))
         init_mfd.add_argument(
+            "--microfluidics-serial-port",
+            type=str,
+            default="/dev/ttyACM0",
+            help=(
+                "The serial port path to the system device that grants access "
+                "to the microfluidics device. Default (/dev/ttyACM0)"))
+
+        reset_mfd = subcommands.add_parser(
+            "reset-microfluidics-device",
+            description="Reset device to return it to a sane state.")
+        reset_mfd.add_argument(
             "--microfluidics-serial-port",
             type=str,
             default="/dev/ttyACM0",
