@@ -62,3 +62,15 @@ def device_stabilisation(inst: Keithley2600):
         inst.measure_voltage(inst.smub)
         inst.measure_current(inst.smub)
     logger.info("============================")
+
+
+def initialise_smu(
+        visa_address, line_frequency, integration_time: float) -> Keithley2600:
+    """Initialize the Source-Measure Unit device."""
+    smu = Keithley2600(visa_address)
+
+    smu.set_integration_time(smu.smua, integration_time)
+    smu.set_integration_time(smu.smub, integration_time)
+    device_stabilisation(smu)
+
+    return smu

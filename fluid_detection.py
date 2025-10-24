@@ -14,7 +14,10 @@ import serial.tools.list_ports
 from keithley2600 import Keithley2600
 
 from gfet.generic import write_results
-from gfet.keithley import connect, select_visa_address, device_stabilisation
+from gfet.keithley import (connect,
+                           initialise_smu,
+                           select_visa_address,
+                           device_stabilisation)
 
 from logging_utils import set_loggers_level
 from microfluidics import (collect,
@@ -189,17 +192,6 @@ def run_fluid_detection_loop(
     return 0
 
 
-def init_smu(visa_address, line_frequency):
-    """Initialize the Source-Measure Unit device."""
-    smu = Keithley2600(visa_address)
-
-    device_stabilisation(smu)
-
-    integration_time = (0.001 + (1 / line_frequency)) / 2 # halfway between
-    smu.set_integration_time(smu.smua, integration_time)
-    smu.set_integration_time(smu.smub, integration_time)
-
-
 def plot_file(infile, outfile, plottitle, yaxis, ylabel):
     g = gnuplot.Gnuplot(log=True)
     g.set(terminal='svg font "arial,10" fontscale 1.0 size 1200,1000 dynamic background rgb "white"',
@@ -246,7 +238,11 @@ def dispatch_subcommand(args) -> int:
             reset_microfluidics_device(
                 serial.Serial(args.microfluidics_serial_port))
         case "initialise-source-measure-unit":
-            init_smu(args.smu_visa_address, args.line_frequency)
+            initialise_smu(
+                args.smu_visa_address,
+                args.line_frequency,
+                integration_time = (0.001 + (1 / line_frequency)) / 2 # halfway between
+            )
         case "plot-file":
             plot_file(args.inputfile,
                       args.outputfile,
