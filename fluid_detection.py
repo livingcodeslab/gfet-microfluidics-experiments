@@ -186,18 +186,6 @@ def run_fluid_detection_loop(
         stop() # stop SMU
         thrd.join() # Wait for graceful shutdown
     logger.info("============================")
-        
-
-def run(
-        mfd_port: serial.Serial,
-        smu: Keithley2600,
-        outdir: Path
-) -> int:
-    """Run the fluid-detection logic."""
-    run_fluid_detection_loop(mfd_port, smu, outdir)
-    reset_microfluidics_device(mfd_port)
-
-    # print("would plot values for each channel …")
     return 0
 
 
@@ -266,7 +254,7 @@ def dispatch_subcommand(args) -> int:
                       args.yaxis,
                       args.ylabel)
         case "run-fluid-detection":
-            return run(
+            return run_fluid_detection_loop(
                 serial.Serial(args.microfluidics_serial_port),
                 Keithley2600(args.smu_visa_address),
                 args.output_directory)
