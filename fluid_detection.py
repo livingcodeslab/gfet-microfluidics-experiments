@@ -80,7 +80,7 @@ def start_smu(
                 "drain_voltage": drain_v,
                 "drain_current": drain_c,
                 "drain_resistance": (
-                    "" if drain_c == 0.0 else ((drain_v/drain_c)/1000)),
+                    "" if drain_c == 0.0 else abs((drain_v/drain_c)/1000)),
                 "gate_voltage": smu.measure_voltage(smu.smua),
                 "gate_current": smu.measure_current(smu.smua),
             }
