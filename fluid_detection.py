@@ -171,12 +171,17 @@ def run_fluid_detection_loop(
     for chan in REAGENT_CHANNELS:
         stop, thrd = start_smu(
             smu,
-            output_directory.joinpath(f"{chan.value:02}.txt"),
-            line_frequency)
-        print(f"Collecting plug for reagent {chan.value}")
-        collect(mfd_port, chan, seconds=5) # collect/waste reagent plug
-        print(f"Pushing reagent {chan.value} out to waste")
-        vent_chip2waste(mfd_port, seconds=120)# vent to collection/waste
+            output_directory.joinpath(f"{chan.value:02}.txt"))
+        logger.info("Collecting plugs for reagent %s", chan.value)
+        vent_chip2collection(mfd_port, seconds=120)
+        for _ in range(0, 5):
+            collect(mfd_port, chan, seconds=5)
+            vent_chip2collection(mfd_port, seconds=1)
+
+        logger.info("Push solid reagent %s flow out to waste", chan.value)
+        collect(mfd_port, chan, seconds=90)
+        logger.info("Venting the GFET line completely")
+        vent_chip2collection(mfd_port, seconds=120)# vent to collection/waste
         stop() # stop SMU
         thrd.join() # Wait for graceful shutdown
     logger.info("============================")
