@@ -186,7 +186,14 @@ def run_fluid_detection_loop(
     return 0
 
 
-def plot_file(infile, outfile, plottitle, yaxis, ylabel):
+def plot_file(
+        infile: Path,
+        outfile: Path,
+        plottitle: str,
+        yaxis: str,
+        ylabel: str,
+        legend_title: str = "Resistance"
+):
     g = gnuplot.Gnuplot(log=True)
     g.set(terminal='svg font "arial,10" fontscale 1.0 size 1200,1000 dynamic background rgb "white"',
           #terminal='pngcairo font "arial,10" fontscale 1.0 size 1000, 800',
@@ -212,7 +219,7 @@ def plot_file(infile, outfile, plottitle, yaxis, ylabel):
     plot_args = [
         f"'{infile}' "
         f"using 't':'{yaxis}' "
-        f"title 'some title' "
+        f"title '{legend_title}' "
         "with lines"]
     g.plot(*plot_args)
 
@@ -242,7 +249,8 @@ def dispatch_subcommand(args) -> int:
                       args.outputfile,
                       args.plottitle,
                       args.yaxis,
-                      args.ylabel)
+                      args.ylabel,
+                      args.legend_title)
         case "run-fluid-detection":
             return run_fluid_detection_loop(
                 serial.Serial(args.microfluidics_serial_port),
@@ -389,6 +397,12 @@ if __name__ == "__main__":
             type=str,
             help="Label for Y axis",
             default="Drain Resistance (Ω)")
+        plotter.add_argument(
+            "--legend_title",
+            metavar="--legend-title",
+            type=str,
+            default="Resistance",
+            help="Label for the legend in the plot.")
 
         args = parser.parse_args()
         logger.setLevel(getattr(logging, args.log_level.upper()))
