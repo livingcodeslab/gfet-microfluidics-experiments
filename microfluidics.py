@@ -101,7 +101,7 @@ def wash_common(port, seconds: int = 25, rpm: int = 36) -> bool:
 
 
 def wash_chip(port, seconds: int = 25, rpm: int = 36) -> bool:
-    """Wash common line up to before the chip, out to waste."""
+    """Wash common line, through chip and out to waste."""
     return wash(port, "COLLECTION", Channel.WSHL, seconds, rpm)
 
 
