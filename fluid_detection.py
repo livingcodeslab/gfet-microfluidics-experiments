@@ -1,4 +1,9 @@
-"""fluid_detection: Attempt to detect when a liquid passes over chip."""
+"""
+fluid_detection: Attempt to detect when a liquid passes over chip.
+
+This flows a 'plug' of fluid, surrounded by air, over the chip, and is meant to
+detect when the plug arrives on and depart from the chip.
+"""
 import logging
 import threading
 from pathlib import Path
