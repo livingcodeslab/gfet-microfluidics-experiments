@@ -3,21 +3,40 @@ fluid_buffer_flows: Attempt to detect change in fluid from a neutral buffer
 fluid to a reagent of interest.
 """
 import sys
+import time
 import logging
 from argparse import Namespace, ArgumentParser
 
+import serial
+
 from logging_utils import setup_logging
-from microfluidics import REAGENT_CHANNELS
+from microfluidics import (collect, wash_chip, REAGENT_CHANNELS)
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    encoding="utf-8",
-    format="%(asctime)s - %(name)s - %(levelname)s — %(message)s")
 
 WASH = REAGENT_CHANNELS[0]
-PBS_0point001X = REAGENT_CHANNELS[3]
-PBS_0point0001X = REAGENT_CHANNELS[2]
-PBS_0point00001X = REAGENT_CHANNELS[1]
+PBS_0point001X = REAGENT_CHANNELS[2]
+PBS_0point0001X = REAGENT_CHANNELS[1]
+PBS_0point00001X = REAGENT_CHANNELS[0]
+
+
+def run_fluid_buffer_flows(mfd_port: serial.Serial) -> int:
+    """Run flows, picking reagent and buffering them with neutral wash."""
+    logger.info("Begin fluid-buffer flows.")
+    for chan in (PBS_0point00001X, PBS_0point0001X, PBS_0point001X):
+        PLUG_SIZE = 5
+        logger.info("Collecting reagent %02d for %02d seconds.",
+                    chan.value,
+                    PLUG_SIZE)
+        collect(mfd_port, chan, seconds=PLUG_SIZE)
+        logger.info("Buffering with %02d seconds long wash buffer",
+                    PLUG_SIZE*2)
+        wash_chip(mfd_port, seconds=(2 * PLUG_SIZE))
+
+    logger.info("Washing GFET line for %02d seconds.", 60)
+    wash_chip(mfd_port, seconds=60)
+    logger.info("Complete fluid-buffer flows.")
+    return 0
 
 
 def dispatch_subcommand(args: Namespace):
@@ -26,7 +45,8 @@ def dispatch_subcommand(args: Namespace):
     logger.debug("We are dispatching!")
     match args.command:
         case "run-fluid-flows":
-            logger.debug("Would run actual flows!")
+            return run_fluid_buffer_flows(serial.Serial(
+                args.microfluidics_serial_port))
     return 0
 
 
