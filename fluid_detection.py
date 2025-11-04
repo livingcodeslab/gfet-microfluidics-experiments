@@ -29,7 +29,9 @@ from microfluidics import (collect,
                            REAGENT_CHANNELS,
                            vent_chip2collection,
                            prime_wash_to_channel,
-                           prime_reagent_to_channel)
+                           prime_reagent_to_channel,
+                           reset_microfluidics_device,
+                           initialise_microfluidics_device)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -125,38 +127,6 @@ def prime_all_reagents(port: serial.Serial):
     for channel in reversed(REAGENT_CHANNELS):
         logger.info(f"\tChannel {channel.value:02}")
         prime_reagent_to_channel(port, channel)
-
-
-def initialise_microfluidics_device(mfd_port: serial.Serial):
-    logger.info("=== Initialise device ===")
-    logger.info("Priming the wash line.")
-    prime_wash_to_channel(mfd_port, Channel.WSHL)
-    logger.info("Priming 'wash' on all reagents' lines!")
-    prime_wash_on_all_lines(mfd_port)
-
-    logger.info("Priming reagents to all channels")
-    for chan in REAGENT_CHANNELS:
-        logger.debug(f"\tChannel {chan.value:02}")
-        prime_reagent_to_channel(mfd_port, chan)
-
-    logger.info("Washing common line")
-    wash_common(mfd_port)
-    logger.info("Washing GFET line")
-    wash_chip(mfd_port)
-
-
-def reset_microfluidics_device(mfd_port: serial.Serial):
-    """Reset the microfluidics device."""
-    logger.info("=== Reset microfluidics device ===")
-    logger.info("wash common")
-    wash_common(mfd_port)
-    logger.info("wash GFET")
-    wash_chip(mfd_port)
-    logger.info("vent common")
-    vent_common(mfd_port)
-    logger.info("vent GFET")
-    vent_chip2waste(mfd_port)
-    logger.info("==================================")
 
 
 def run_fluid_detection_loop(

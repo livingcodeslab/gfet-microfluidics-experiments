@@ -3,6 +3,8 @@ import time
 import logging
 from enum import Enum
 
+import serial
+
 logger = logging.getLogger(__name__)
 
 class Channel(Enum):
@@ -133,3 +135,36 @@ def collect(port, channel: Channel, seconds: int = 25, rpm: int = 36) -> bool:
 def vent_chip2collection(port, seconds: int = 25, rpm: int = 36) -> bool:
     """Vent atmosphere through common line, chip and out to collection."""
     return collect(port, Channel.VENT, seconds, rpm)
+
+
+def initialise_microfluidics_device(mfd_port: serial.Serial):
+    logger.info("=== Initialise device ===")
+    logger.info("Priming the wash line.")
+    prime_wash_to_channel(mfd_port, Channel.WSHL)
+    logger.info("Priming 'wash' on all reagents' lines!")
+    prime_wash_on_all_lines(mfd_port)
+
+    logger.info("Priming reagents to all channels")
+    for chan in REAGENT_CHANNELS:
+        logger.debug(f"\tChannel {chan.value:02}")
+        prime_reagent_to_channel(mfd_port, chan)
+
+    logger.info("Washing common line")
+    wash_common(mfd_port)
+    logger.info("Washing GFET line")
+    wash_chip(mfd_port)
+    logger.info("=== Initialise device: Complete! ===")
+
+
+def reset_microfluidics_device(mfd_port: serial.Serial):
+    """Reset the microfluidics device."""
+    logger.info("=== Reset microfluidics device ===")
+    logger.info("wash common")
+    wash_common(mfd_port)
+    logger.info("wash GFET")
+    wash_chip(mfd_port)
+    logger.info("vent common")
+    vent_common(mfd_port)
+    logger.info("vent GFET")
+    vent_chip2waste(mfd_port)
+    logger.info("==================================")
