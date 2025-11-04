@@ -1,12 +1,8 @@
-import sys
-import csv
-import copy
-import time
+"""fluid_detection: Attempt to detect when a liquid passes over chip."""
 import logging
 import threading
 from pathlib import Path
-from typing import Optional
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 
 import pyvisa
 from pygnuplot import gnuplot
@@ -14,18 +10,10 @@ import serial.tools.list_ports
 from keithley2600 import Keithley2600
 
 from gfet.generic import write_results
-from gfet.keithley import (connect,
-                           initialise_smu,
-                           select_visa_address,
-                           device_stabilisation)
+from gfet.keithley import initialise_smu
 
 from logging_utils import set_loggers_level
 from microfluidics import (collect,
-                           Channel,
-                           wash_chip,
-                           wash_common,
-                           vent_common,
-                           vent_chip2waste,
                            REAGENT_CHANNELS,
                            vent_chip2collection,
                            prime_wash_to_channel,
@@ -53,7 +41,8 @@ def list_serial_ports(show_all: bool = False):
             f"{port.product} ({port.vid}:{port.pid})")
 
 
-def list_visa_addresses(show_all: bool = False):
+def list_visa_addresses():
+    """Show a list of all VISA addresses on the computer."""
     resources = pyvisa.ResourceManager().list_resources()
     print("The available VISA addresses are: ")
     for address in resources:
@@ -96,8 +85,6 @@ def start_smu(
 
             write_results(filepath, _results)
 
-        # TODO: Any necessary cleanup
-
     def stop_smu():
         """Stop the running of the SMU"""
         stop_event.set()
@@ -108,6 +95,7 @@ def start_smu(
     return stop_smu, worker_thread
 
 def send_and_wait_for_response(port, line, line_num = -1):
+    """Send command to microfluidics device and wait for response."""
     port.write(line.encode())
 
     while True:
@@ -115,17 +103,20 @@ def send_and_wait_for_response(port, line, line_num = -1):
         if response == "FIN":
             print(f"{line_num} | Command executed successfully.")
             break
-        elif response == "ERR":
-            raise Exception(f"{line_num} | Error executing command.")
+        if response == "ERR":
+            raise Exception(# pylint: disable=[broad-exception-raised]
+                f"{line_num} | Error executing command.")
 
 def prime_wash_on_all_lines(port: serial.Serial, seconds: int = 25, rpm: int = 36):
+    """Prime all wash lines."""
     for channel in reversed(REAGENT_CHANNELS):
-        logger.debug(f"\tChannel {channel.value:02}")
+        logger.debug("\tChannel %02s", channel.value)
         prime_wash_to_channel(port, channel, seconds, rpm)
 
 def prime_all_reagents(port: serial.Serial):
+    """Prime all reagent lines."""
     for channel in reversed(REAGENT_CHANNELS):
-        logger.info(f"\tChannel {channel.value:02}")
+        logger.info("\tChannel %02s", channel.value)
         prime_reagent_to_channel(port, channel)
 
 
@@ -156,7 +147,7 @@ def run_fluid_detection_loop(
     return 0
 
 
-def plot_file(
+def plot_file(# pylint: disable=[too-many-arguments, too-many-positional-arguments]
         infile: Path,
         outfile: Path,
         plottitle: str,
@@ -164,12 +155,16 @@ def plot_file(
         ylabel: str,
         legend_title: str = "Resistance"
 ):
+    """Create plot using data in provided file."""
     g = gnuplot.Gnuplot(log=True)
-    g.set(terminal='svg font "arial,10" fontscale 1.0 size 1200,1000 dynamic background rgb "white"',
+    g.set(terminal=(
+        'svg font "arial,10" fontscale 1.0 size 1200,1000 dynamic background '
+        'rgb "white"'),
           #terminal='pngcairo font "arial,10" fontscale 1.0 size 1000, 800',
           # output='"testplot.1.png"',
           output=f'"{outfile}"',
-          key="fixed left top horizontal Right noreverse enhanced autotitle box lt black linewidth 1.000 dashtype solid",
+          key=("fixed left top horizontal Right noreverse enhanced autotitle "
+               "box lt black linewidth 1.000 dashtype solid"),
           # samples="50, 50",
           title=f'"{plottitle}" font ",20" textcolor lt -1 norotate',
           datafile='separator ","',
@@ -201,7 +196,7 @@ def dispatch_subcommand(args) -> int:
         case "list-serial-ports":
             list_serial_ports(args.show_all)
         case "list-visa-addresses":
-            list_visa_addresses(args.show_all)
+            list_visa_addresses()
         case "initialise-microfluidics-device":
             initialise_microfluidics_device(
                 serial.Serial(args.microfluidics_serial_port))
@@ -257,10 +252,10 @@ if __name__ == "__main__":
                   "To see all ports, pass this flag."),
             action="store_true")
 
-        list_visa_addresses = subcommands.add_parser(
+        list_visa = subcommands.add_parser(
             "list-visa-addresses",
             description="List the VISA addresse available on the system")
-        list_visa_addresses.add_argument(
+        list_visa.add_argument(
             "--show-all",
             help=("We show only VISA addresses with actual devices attached. "),
             action="store_true")
