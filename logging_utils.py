@@ -16,8 +16,9 @@ def setup_logging(
     """Setup logging in a most generic way."""
     logging.basicConfig(
         encoding="utf-8",
-        format="%(asctime)s - %(name)s - %(levelname)s — %(message)s",
-        loglevel=logging.INFO)
+        format=("%(asctime)s - %(created)f - %(name)s - %(levelname)s — "
+                "%(message)s"),
+        level=logging.INFO)
     logger.setLevel(getattr(logging, loglevel.upper()))
     set_loggers_level(aux_loggers, logger.getEffectiveLevel())
     return logger
