@@ -22,15 +22,17 @@ PBS_0point0005X = REAGENT_CHANNELS[1]
 def run_fluid_buffer_flows(mfd_port: serial.Serial) -> int:
     """Run flows, picking reagent and buffering them with neutral wash."""
     logger.info("Begin fluid-buffer flows.")
-    for chan in (PBS_0point00001X, PBS_0point0001X, PBS_0point001X):
-        PLUG_SIZE = 5
-        logger.info("Collecting reagent %02d for %02d seconds.",
-                    chan.value,
-                    PLUG_SIZE)
-        collect(mfd_port, chan, seconds=PLUG_SIZE)
-        logger.info("Buffering with %02d seconds long wash buffer",
-                    PLUG_SIZE*2)
-        wash_chip(mfd_port, seconds=(2 * PLUG_SIZE))
+    for _ in range(0, 5):
+        # Inter-leave plugs of differerent concentrations a number of times.
+        for chan in (PBS_0point0005X, PBS_0point001X):
+            PLUG_SIZE = 5
+            logger.info("Collecting reagent %02d for %02d seconds.",
+                        chan.value,
+                        PLUG_SIZE)
+            collect(mfd_port, chan, seconds=PLUG_SIZE)
+            logger.info("Buffering with %02d seconds long wash buffer",
+                        PLUG_SIZE*2)
+            wash_chip(mfd_port, seconds=(2 * PLUG_SIZE))
 
     logger.info("Washing GFET line for %02d seconds.", 60)
     wash_chip(mfd_port, seconds=60)
