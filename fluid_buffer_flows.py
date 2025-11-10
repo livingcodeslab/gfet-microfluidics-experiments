@@ -79,13 +79,6 @@ if __name__ == "__main__":
             help=(
                 "The serial port path to the system device that grants access "
                 "to the microfluidics device. Default (/dev/ttyACM0)"))
-        run_flows.add_argument(
-            "--smu-visa-address",
-            type=str,
-            default="ASRL/dev/ttyUSB0::INSTR",
-            help=(
-                "The VISA address to the source-measure unit. "
-                "Default (ASRL/dev/ttyUSB0::INSTR)"))
         args = parser.parse_args()
         setup_logging(args.log_level, logger, ("microfluidics",))
         return dispatch_subcommand(args)
