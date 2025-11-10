@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 
 WASH = REAGENT_CHANNELS[0]
 PBS_0point001X = REAGENT_CHANNELS[2]
-PBS_0point0001X = REAGENT_CHANNELS[1]
-PBS_0point00001X = REAGENT_CHANNELS[0]
+PBS_0point0005X = REAGENT_CHANNELS[1]
 
 
 def run_fluid_buffer_flows(mfd_port: serial.Serial) -> int:
