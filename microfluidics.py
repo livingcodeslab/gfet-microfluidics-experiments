@@ -137,6 +137,13 @@ def vent_chip2collection(port, seconds: int = 25, rpm: int = 36) -> bool:
     return collect(port, Channel.VENT, seconds, rpm)
 
 
+def prime_wash_on_all_lines(port: serial.Serial, seconds: int = 25, rpm: int = 36):
+    """Prime all wash lines."""
+    for channel in reversed(REAGENT_CHANNELS):
+        logger.debug("\tChannel %02d", channel.value)
+        prime_wash_to_channel(port, channel, seconds, rpm)
+
+
 def initialise_microfluidics_device(mfd_port: serial.Serial):
     logger.info("=== Initialise device ===")
     logger.info("Priming the wash line.")

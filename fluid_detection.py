@@ -112,12 +112,6 @@ def send_and_wait_for_response(port, line, line_num = -1):
             raise Exception(# pylint: disable=[broad-exception-raised]
                 f"{line_num} | Error executing command.")
 
-def prime_wash_on_all_lines(port: serial.Serial, seconds: int = 25, rpm: int = 36):
-    """Prime all wash lines."""
-    for channel in reversed(REAGENT_CHANNELS):
-        logger.debug("\tChannel %02s", channel.value)
-        prime_wash_to_channel(port, channel, seconds, rpm)
-
 def prime_all_reagents(port: serial.Serial):
     """Prime all reagent lines."""
     for channel in reversed(REAGENT_CHANNELS):
