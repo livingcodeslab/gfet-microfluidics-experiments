@@ -33,7 +33,9 @@ def print_line(reading):
 def read_values(
         visa_address: str,
         line_frequency: int,
-        nplc: float
+        nplc: float,
+        gate_voltage: float = 1.00,
+        drain_voltage: float = 0.05
 ) -> int:
     """Read the values."""
     logger.info("Initialising the device.")
@@ -41,8 +43,8 @@ def read_values(
 
     # set Operation points
     logger.debug("Setting up the operating points.")
-    smu.apply_voltage(smu.smua, 1.00)  # set gate voltage
-    smu.apply_voltage(smu.smub, 0.05) # set drain voltage
+    smu.apply_voltage(smu.smua, gate_voltage)  # set gate voltage
+    smu.apply_voltage(smu.smub, drain_voltage) # set drain voltage
     logger.info("Device ready.")
 
     logger.debug("Begin retrieving values.")
@@ -101,6 +103,16 @@ def main():
         type=float,
         default=((0.001 + 25)/2),
         help="Number of power-line cycles: used for measurement integration.")
+    parser.add_argument(
+        "--gate-voltage",
+        type=float,
+        default=1.00,
+        help="A value for the gate voltage.")
+    parser.add_argument(
+        "--drain-voltage",
+        type=float,
+        default=0.05,
+        help="A value for the gate voltage.")
 
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.log_level.upper()))
@@ -109,7 +121,9 @@ def main():
     return read_values(
         args.smu_visa_address,
         args.line_frequency,
-        args.nplc)
+        args.nplc,
+        args.gate_voltage,
+        args.drain_voltage)
 
 
 if __name__ == "__main__":
