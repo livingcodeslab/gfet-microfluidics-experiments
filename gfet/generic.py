@@ -19,6 +19,13 @@ def float_range(
         current = current + step
 
 
+def float_range2(high: int, steps: int, low: int = 0) -> Iterator[float]:
+    """Return `steps` equally-spaced values from `low` to `high`."""
+    _diff = (high-low)
+    for val in range(low, steps*_diff, _diff):
+        yield val/steps
+
+
 def build_filename(
         outdir: Path, file_prefix: str, index: int, total_files: int) -> Path:
     if not outdir.exists():
