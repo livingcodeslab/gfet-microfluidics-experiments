@@ -1,4 +1,5 @@
 """Command-line utilities"""
+from typing import TypeVar
 from argparse import ArgumentParser
 
 
@@ -15,6 +16,22 @@ def fetch_range_float(value: str) -> tuple[float, float, float]:
     if items[0] < items[1]:
         return items
     return (items[1], items[0], items[2])
+
+
+T = TypeVar("T")
+def make_value_range_checker(low: T, high: T, title: str = "") -> [[str], T]:
+    """Return a function that verifies that the value is is given is within the
+    range [low, high]."""
+    assert type(low) == type(high), (
+        "Both `low` and `high` **MUST** be of the same type.")
+    def _checker_(val) -> T:
+        _val = type(low)(val)
+        if low <= _val <= high:
+            return _val
+        raise ValueError(
+            (f"{title.strip()}: " if bool(title.strip()) else "") +
+            f"{_val} is not within [{low}, {high}].")
+    return _checker_
 
 
 def cli_add_logging_arg(parser: ArgumentParser) -> ArgumentParser:
