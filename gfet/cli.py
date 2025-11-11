@@ -71,3 +71,15 @@ def cli_add_smu_args(parser: ArgumentParser) -> ArgumentParser:
         default=((0.001 + 25)/2),
         help="Number of power-line cycles: used for measurement integration.")
     return parser
+
+
+def cli_add_microfluidics_args(parser: ArgumentParser) -> ArgumentParser:
+    """Add the microfluidics options to the CLI."""
+    parser.add_argument(
+        "--microfluidics-serial-port",
+        type=str,
+        default="/dev/ttyACM0",
+        help=(
+            "The serial port path to the system device that grants access "
+            "to the microfluidics device. Default (/dev/ttyACM0)"))
+    return parser
