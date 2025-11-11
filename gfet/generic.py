@@ -19,10 +19,14 @@ def float_range(
         current = current + step
 
 
-def float_range2(high: int, steps: int, low: int = 0) -> Iterator[float]:
+def float_range2(
+        low: Union[int, float],
+        high: Union[int, float],
+        steps: int = 10
+) -> Iterator[float]:
     """Return `steps` equally-spaced values from `low` to `high`."""
     _diff = (high-low)
-    for val in range(low, steps*_diff, _diff):
+    for val in range(int(low), int(steps*_diff), int(_diff)):
         yield val/steps
 
 
