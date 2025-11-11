@@ -11,7 +11,7 @@ def set_loggers_level(loggers: tuple[str, ...], loglevel):
 def setup_logging(
         loglevel: str,
         logger: logging.Logger,
-        aux_loggers: tuple[str, ...]
+        aux_loggers: tuple[str, ...] = tuple()
 ):
     """Setup logging in a most generic way."""
     logging.basicConfig(
