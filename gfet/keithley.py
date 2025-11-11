@@ -7,11 +7,7 @@ import pyvisa
 
 from keithley2600 import Keithley2600, KeithleyIOError
 
-_logHandler = logging.StreamHandler()
-_logHandler.setFormatter(logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s — %(message)s"))
 logger = logging.getLogger(__name__)
-logger.addHandler(_logHandler)
 
 def select_visa_address() -> str:
     resources = pyvisa.ResourceManager().list_resources()
