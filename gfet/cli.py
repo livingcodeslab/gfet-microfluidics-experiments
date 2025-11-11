@@ -1,6 +1,6 @@
 """Command-line utilities"""
-from typing import TypeVar
 from argparse import ArgumentParser
+from typing import TypeVar, Callable
 
 
 def fetch_range_float(value: str) -> tuple[float, float, float]:
@@ -19,7 +19,8 @@ def fetch_range_float(value: str) -> tuple[float, float, float]:
 
 
 T = TypeVar("T")
-def make_value_range_checker(low: T, high: T, title: str = "") -> [[str], T]:
+def make_value_range_checker(
+        low: T, high: T, title: str = "") -> Callable[[str], T]:
     """Return a function that verifies that the value is is given is within the
     range [low, high]."""
     assert type(low) == type(high), (
