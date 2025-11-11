@@ -167,9 +167,9 @@ def reset_microfluidics_device(mfd_port: serial.Serial):
     """Reset the microfluidics device."""
     logger.info("=== Reset microfluidics device ===")
     logger.info("wash common")
-    wash_common(mfd_port)
+    # wash_common(mfd_port)
     logger.info("wash GFET")
-    wash_chip(mfd_port)
+    # wash_chip(mfd_port)
     logger.info("vent common")
     vent_common(mfd_port)
     logger.info("vent GFET")
