@@ -5,6 +5,8 @@ import argparse
 from pathlib import Path
 
 from gfet.keithley import initialise_smu
+from gfet.cli import cli_add_smu_args, cli_add_logging_arg
+
 from logging_utils import set_loggers_level
 
 logger = logging.getLogger(__name__)
@@ -75,34 +77,8 @@ def read_values(
 
 def main():
     """smu_read_continuously entry point."""
-    parser = argparse.ArgumentParser("read_smu_continuously")
-    parser.add_argument(
-        "--log-level",
-        type=str,
-        choices=("critical",
-                 "error",
-                 "warning",
-                 "info",
-                 "debug"),
-        default="info")
-    parser.add_argument(
-        "--smu-visa-address",
-        type=str,
-        default="ASRL/dev/ttyUSB0::INSTR",
-        help=(
-            "The VISA address to the source-measure unit. "
-            "Default (ASRL/dev/ttyUSB0::INSTR)"))
-    parser.add_argument(
-        "--line-frequency",
-        type=int,
-        choices=(50, 60),
-        default=60,
-        help="The AC line frequency.")
-    parser.add_argument(
-        "--nplc",
-        type=float,
-        default=((0.001 + 25)/2),
-        help="Number of power-line cycles: used for measurement integration.")
+    parser = cli_add_smu_args(cli_add_logging_arg(argparse.ArgumentParser(
+        "read_smu_continuously")))
     parser.add_argument(
         "--gate-voltage",
         type=float,
