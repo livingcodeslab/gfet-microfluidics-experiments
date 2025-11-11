@@ -81,12 +81,12 @@ def pump_and_read(
     logger.debug("There are %s gate voltages.", len(gate_voltages))
     logger.debug("There are %s channel voltages.", len(channel_voltages))
     while seconds > 0:
+        command(seconds=1)
         logger.debug("remaining seconds for this run: %s", seconds)
         for gatevtg in gate_voltages:
             logger.debug("gate voltage: %s", gatevtg)
             for chnvtg in channel_voltages:
                 logger.debug("channel voltage: %s", chnvtg)
-                command(seconds=1)
                 yield take_reading(smu, gatevtg, chnvtg)
         logger.debug("recomputing seconds...")
         seconds = seconds - 1
