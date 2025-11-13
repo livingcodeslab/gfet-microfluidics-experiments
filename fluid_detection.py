@@ -151,6 +151,7 @@ def plot_file(# pylint: disable=[too-many-arguments, too-many-positional-argumen
         infile: Path,
         outfile: Path,
         plottitle: str,
+        xaxis: str,
         yaxis: str,
         ylabel: str,
         legend_title: str = "Resistance"
@@ -183,7 +184,7 @@ def plot_file(# pylint: disable=[too-many-arguments, too-many-positional-argumen
     g.cmd("NO_ANIMATION = 1")
     plot_args = [
         f"'{infile}' "
-        f"using 't':'{yaxis}' "
+        f"using '{xaxis}':'{yaxis}' "
         f"title '{legend_title}' "
         "with lines"]
     g.plot(*plot_args)
@@ -213,6 +214,7 @@ def dispatch_subcommand(args) -> int:
             plot_file(args.inputfile,
                       args.outputfile,
                       args.plottitle,
+                      args.xaxis,
                       args.yaxis,
                       args.ylabel,
                       args.legend_title)
