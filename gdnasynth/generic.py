@@ -25,6 +25,7 @@ def float_range2(
         steps: int = 10
 ) -> Iterator[float]:
     """Return `steps` equally-spaced values from `low` to `high`."""
+    logger.debug("low: %s, high: %s, steps: %s", low, high, steps)
     _diff = (high-low)
     for val in range(int(low), int(steps*_diff), int(_diff)):
         yield val/steps

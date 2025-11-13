@@ -6,9 +6,9 @@ from argparse import Namespace, ArgumentParser
 
 from keithley2600 import Keithley2600
 
-from gfet.cli import fetch_range_float
-from gfet.keithley import connect, select_visa_address
-from gfet.generic import (
+from gdnasynth.cli import fetch_range_float
+from gdnasynth.keithley import connect, select_visa_address
+from gdnasynth.generic import (
     float_range,
     range_length,
     write_results,

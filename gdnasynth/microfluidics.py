@@ -32,15 +32,16 @@ class CommandError(Exception):
 
 def send_and_wait_for_response(port, cmd: str, line_num: int = -1) -> bool:
     """Send a command and wait for the response."""
-    cmd = cmd.encode()
-    logger.debug("Sending command\n\t%s\nto port \n\t%s.\n", cmd, port)
-    port.write(cmd)
+    _cmd = cmd.encode()
+    logger.debug("Sending command\n\t%s\nto port \n\t%s.\n", _cmd, port)
+    port.write(_cmd)
 
     while True:
         response = port.readline().decode().strip()
         if response == "ERR":
             raise Exception(
-                f"{line_num} | {response} | Error executing command ('{cmd}')")
+                f"{line_num} | {response} | Error executing command "
+                f"('{_cmd!r}')")
         if response == "FIN":
             logger.debug(f"{line_num} | Command executed successfully.")
             break
