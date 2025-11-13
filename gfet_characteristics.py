@@ -14,7 +14,7 @@ from gdnasynth.generic import (
     write_results,
     build_filename)
 
-from logging_utils import set_loggers_level
+from gdnasynth.logging import set_loggers_level
 
 _module_name_ = __name__
 logger = logging.getLogger(__name__)

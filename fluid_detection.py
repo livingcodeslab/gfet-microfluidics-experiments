@@ -25,7 +25,7 @@ from gdnasynth.microfluidics import (
     reset_microfluidics_device,
     initialise_microfluidics_device)
 
-from logging_utils import set_loggers_level
+from gdnasynth.logging import set_loggers_level
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(

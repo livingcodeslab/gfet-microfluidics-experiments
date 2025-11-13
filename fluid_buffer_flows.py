@@ -9,7 +9,7 @@ from argparse import Namespace, ArgumentParser
 
 import serial
 
-from logging_utils import setup_logging
+from gdnasynth.logging import setup_logging
 from gdnasynth.microfluidics import collect, wash_chip, REAGENT_CHANNELS
 
 logger = logging.getLogger(__name__)

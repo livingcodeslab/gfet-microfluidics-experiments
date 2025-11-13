@@ -4,7 +4,7 @@ import serial
 import logging
 import argparse
 
-from logging_utils import set_loggers_level
+from gdnasynth.logging import set_loggers_level
 from read_smu_continuously import print_line
 from microfluidics import (collect,
                            Channel,

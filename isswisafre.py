@@ -19,6 +19,7 @@ import serial
 from keithley2600 import Keithley2600
 
 from gdnasynth.generic import float_range2
+from gdnasynth.logging import setup_logging
 from gdnasynth.keithley import initialise_smu
 from gdnasynth.microfluidics import Channel, collect, wash_chip
 from gdnasynth.cli import (
@@ -28,7 +29,7 @@ from gdnasynth.cli import (
     cli_add_microfluidics_args)
 
 
-from logging_utils import setup_logging
+from gdnasynth.logging_utils import setup_logging
 
 logger = logging.getLogger(__name__)
 
