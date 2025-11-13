@@ -1,38 +1,5 @@
 """Command-line utilities"""
 from argparse import ArgumentParser
-from typing import TypeVar, Callable
-
-
-def fetch_range_float(value: str) -> tuple[float, float, float]:
-    """Convert a string into a tuple of values."""
-    items = value.split(",")
-    if len(items) not in (2, 3):
-        raise ValueError(
-            "Invalid range value. Expected two comma-separated values.")
-
-    items = tuple(float(item) for item in items)
-    if len(items) == 2:
-        items = items + (0.1,)
-    if items[0] < items[1]:
-        return items
-    return (items[1], items[0], items[2])
-
-
-T = TypeVar("T")
-def make_value_range_checker(
-        low: T, high: T, title: str = "") -> Callable[[str], T]:
-    """Return a function that verifies that the value is is given is within the
-    range [low, high]."""
-    assert type(low) == type(high), (
-        "Both `low` and `high` **MUST** be of the same type.")
-    def _checker_(val) -> T:
-        _val = type(low)(val)
-        if low <= _val <= high:
-            return _val
-        raise ValueError(
-            (f"{title.strip()}: " if bool(title.strip()) else "") +
-            f"{_val} is not within [{low}, {high}].")
-    return _checker_
 
 
 def cli_add_logging_arg(parser: ArgumentParser) -> ArgumentParser:
