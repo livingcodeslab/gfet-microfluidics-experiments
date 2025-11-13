@@ -18,13 +18,14 @@ from typing import Callable, Iterator
 import serial
 from keithley2600 import Keithley2600
 
-from gfet.generic import float_range2
-from gfet.keithley import initialise_smu
-from gfet.cli import (cli_add_smu_args,
-                      cli_add_logging_arg,
-                      make_value_range_checker,
-                      cli_add_microfluidics_args)
-from gfet.microfluidics import Channel, collect, wash_chip
+from gdnasynth.generic import float_range2
+from gdnasynth.keithley import initialise_smu
+from gdnasynth.microfluidics import Channel, collect, wash_chip
+from gdnasynth.cli import (
+    cli_add_smu_args,
+    cli_add_logging_arg,
+    make_value_range_checker,
+    cli_add_microfluidics_args)
 
 
 from logging_utils import setup_logging

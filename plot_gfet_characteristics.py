@@ -6,8 +6,8 @@ from argparse import Namespace, ArgumentParser
 
 from pygnuplot import gnuplot
 
-from gfet.cli import fetch_range_float
-from gfet.generic import float_range, range_length, build_filename
+from gdnasynth.cli import fetch_range_float
+from gdnasynth.generic import float_range, range_length, build_filename
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s — %(message)s")

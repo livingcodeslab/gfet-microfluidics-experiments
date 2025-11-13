@@ -14,15 +14,16 @@ from pygnuplot import gnuplot
 import serial.tools.list_ports
 from keithley2600 import Keithley2600
 
-from gfet.generic import write_results
-from gfet.keithley import initialise_smu
-from gfet.microfluidics import (collect,
-                                REAGENT_CHANNELS,
-                                vent_chip2collection,
-                                prime_wash_to_channel,
-                                prime_reagent_to_channel,
-                                reset_microfluidics_device,
-                                initialise_microfluidics_device)
+from gdnasynth.generic import write_results
+from gdnasynth.keithley import initialise_smu
+from gdnasynth.microfluidics import (
+    collect,
+    REAGENT_CHANNELS,
+    vent_chip2collection,
+    prime_wash_to_channel,
+    prime_reagent_to_channel,
+    reset_microfluidics_device,
+    initialise_microfluidics_device)
 
 from logging_utils import set_loggers_level
 

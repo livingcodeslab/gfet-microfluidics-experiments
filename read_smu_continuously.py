@@ -4,8 +4,8 @@ import logging
 import argparse
 from pathlib import Path
 
-from gfet.keithley import initialise_smu
-from gfet.cli import cli_add_smu_args, cli_add_logging_arg
+from gdnasynth.keithley import initialise_smu
+from gdnasynth.cli import cli_add_smu_args, cli_add_logging_arg
 
 from logging_utils import set_loggers_level
 
