@@ -32,3 +32,11 @@ def make_value_range_checker(
             (f"{title.strip()}: " if bool(title.strip()) else "") +
             f"{_val} is not within [{low}, {high}].")
     return _checker_
+
+
+def existing_file(argvalue: str) -> Path:
+    """Ensure that `argvalue` is an existing file."""
+    _file = Path(argvalue)
+    assert _file.exists() and _file.is_file(), (
+        "The path provided *MUST* exist and be a file.")
+    return _file
