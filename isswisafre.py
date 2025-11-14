@@ -98,16 +98,17 @@ def pump_and_read(
 
 def run_pattern(
         smu: Keithley2600,
-        pattern: tuple[tuple[Callable[[int], bool], int], ...],
+        pattern: tuple[str, tuple[Callable[[int], bool], int], ...],
         gate_voltages: tuple[float, ...],
         channel_voltage: float
 ) -> Iterator[dict[str, float]]:
     """Run pattern of flows and take readings."""
     for item in pattern:
+        logger.info("Running '%s' for %02d seconds.", item[0], item[2])
         yield from pump_and_read(
                 smu,
-                command=item[0],
-                seconds=item[1],
+                command=item[1],
+                seconds=item[2],
                 gate_voltages=gate_voltages,
                 channel_voltages=(channel_voltage, -channel_voltage))
 
@@ -119,21 +120,25 @@ def run_experiment(args: argparse.Namespace) -> int:
     mfd = serial.Serial(args.microfluidics_serial_port)
     # init channels
     _pattern = (
-        (lambda seconds: collect(port=mfd,
+        ("0.0005X PBS",
+         lambda seconds: collect(port=mfd,
                                  channel=PBS_0POINT0005X,
                                  seconds=seconds,
                                  rpm=36),
          10),
-        (lambda seconds: wash_chip(port=mfd,
+        ("Distilled Water",
+         lambda seconds: wash_chip(port=mfd,
                                    seconds=seconds,
                                    rpm=36),
          10),
-        (lambda seconds: collect(port=mfd,
+        ("0.001X PBS",
+         lambda seconds: collect(port=mfd,
                                  channel=PBS_0POINT001X,
                                  seconds=seconds,
                                  rpm=36),
          10),
-        (lambda seconds: wash_chip(port=mfd,
+        ("Distilled Water",
+         lambda seconds: wash_chip(port=mfd,
                                    seconds=seconds,
                                    rpm=36),
          120))
