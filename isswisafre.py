@@ -208,11 +208,9 @@ def main():
     parser = cli_add_logging_arg(argparse.ArgumentParser("isswisafre"))
     subcommands = parser.add_subparsers(dest="command", required=True)
 
-    run_expt_parser = subcommands.add_parser(
-        "run-experiment", description="Run the experiment")
-    run_expt_parser = cli_add_microfluidics_args(
-        cli_add_smu_args(
-            parser))
+    run_expt_parser = cli_add_microfluidics_args(cli_add_smu_args(
+        subcommands.add_parser(
+            "run-experiment", description="Run the experiment")))
     run_expt_parser.add_argument(
         "--max-gate-voltage",
         type=make_value_range_checker(-1.0, 1.0, "Gate Voltage"),
