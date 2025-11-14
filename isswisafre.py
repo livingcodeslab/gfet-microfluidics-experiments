@@ -50,8 +50,6 @@ def take_reading(
     # Set channel voltage to `chn_voltage`
     smu.apply_voltage(smu.smub, channel_voltage)
     # take readings
-    # smu.smua.source.output = smu.smua.OUTPUT_OFF
-    # smu.smub.source.output = smu.smub.OUTPUT_OFF
     reading = dict(zip(
         ("timestamp",
          "provided_gate_voltage",
@@ -67,9 +65,6 @@ def take_reading(
          smu.measure_current(smu.smub),
          smu.measure_voltage(smu.smua),
          smu.measure_current(smu.smua))))
-    # Turn off SMU channels
-    smu.smua.source.output = smu.smua.OUTPUT_OFF
-    smu.smub.source.output = smu.smub.OUTPUT_OFF
     return reading
 
 
@@ -91,6 +86,10 @@ def pump_and_read(
             for chnvtg in channel_voltages:
                 logger.debug("channel voltage: %s", chnvtg)
                 yield take_reading(smu, gatevtg, chnvtg)
+
+        # Turn off SMU channels
+        smu.smua.source.output = smu.smua.OUTPUT_OFF
+        smu.smub.source.output = smu.smub.OUTPUT_OFF
         logger.debug("recomputing seconds...")
         seconds = seconds - 1
         logger.debug("New seconds value: %s", seconds)
