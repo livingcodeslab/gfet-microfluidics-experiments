@@ -78,9 +78,10 @@ def pump_and_read(
     """Pump from channel and read voltage and current values."""
     logger.debug("There are %s gate voltages.", len(gate_voltages))
     logger.debug("There are %s channel voltages.", len(channel_voltages))
-    while seconds > 0:
+    _counter = 0
+    while _counter < seconds:
         command(1)
-        logger.debug("remaining seconds for this run: %s", seconds)
+        logger.debug("remaining seconds for this run: %s", seconds-_counter)
         for gatevtg in gate_voltages:
             logger.debug("gate voltage: %s", gatevtg)
             for chnvtg in channel_voltages:
@@ -91,7 +92,7 @@ def pump_and_read(
         smu.smua.source.output = smu.smua.OUTPUT_OFF
         smu.smub.source.output = smu.smub.OUTPUT_OFF
         logger.debug("recomputing seconds...")
-        seconds = seconds - 1
+        _counter = _counter + 1
         logger.debug("New seconds value: %s", seconds)
 
 
