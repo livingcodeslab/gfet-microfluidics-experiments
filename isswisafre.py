@@ -12,9 +12,9 @@ import sys
 import csv
 import time
 import logging
-import argparse
 from pathlib import Path
 from typing import Callable, Iterator
+from argparse import Namespace, ArgumentParser, ArgumentDefaultsHelpFormatter
 
 import serial
 from keithley2600 import Keithley2600
@@ -113,7 +113,7 @@ def run_pattern(
                 channel_voltages=(channel_voltage, -channel_voltage))
 
 
-def run_experiment(args: argparse.Namespace) -> int:
+def run_experiment(args: Namespace) -> int:
     """Run the experiment."""
     # init mfd, smu, ...
     smu = initialise_smu(args.smu_visa_address, args.line_frequency, args.nplc)
@@ -168,7 +168,7 @@ def __genfilename__(outdir, source, middle):
     return outdir.joinpath(f"{source.stem}_{middle}{source.suffix}")
 
 
-def process_data(args: argparse.Namespace) -> int:
+def process_data(args: Namespace) -> int:
     """Process the raw data into useful data."""
     srcpath = args.raw_source_file
     outdir = args.output_directory
@@ -205,12 +205,16 @@ def dispatch_subcommand(args) -> int:
 
 def main():
     """SMU: read with sweeping gate and flipping channel voltage."""
-    parser = cli_add_logging_arg(argparse.ArgumentParser("isswisafre"))
+    parser = cli_add_logging_arg(ArgumentParser(
+        "isswisafre",
+        formatter_class=ArgumentDefaultsHelpFormatter))
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     run_expt_parser = cli_add_microfluidics_args(cli_add_smu_args(
         subcommands.add_parser(
-            "run-experiment", description="Run the experiment")))
+            "run-experiment",
+            description="Run the experiment",
+            formatter_class=ArgumentDefaultsHelpFormatter)))
     run_expt_parser.add_argument(
         "--max-gate-voltage",
         type=make_value_range_checker(-1.0, 1.0, "Gate Voltage"),
@@ -227,7 +231,8 @@ def main():
 
     data_processing_parser = subcommands.add_parser(
         "process-data",
-        description="Run various data processing tasks against raw results.")
+        description="Run various data processing tasks against raw results.",
+        formatter_class=ArgumentDefaultsHelpFormatter)
     data_processing_parser.add_argument(
         "raw_source_file",
         metavar="raw-source-file",
