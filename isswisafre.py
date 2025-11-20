@@ -19,7 +19,7 @@ from typing import Callable, Iterator
 import serial
 from keithley2600 import Keithley2600
 
-from gdnasynth.generic import float_range2
+from gdnasynth.generic import float_range
 from gdnasynth.logging import setup_logging
 from gdnasynth.keithley import initialise_smu
 from gdnasynth.microfluidics import Channel, collect, wash_chip
@@ -145,7 +145,7 @@ def run_experiment(args: argparse.Namespace) -> int:
     _values = run_pattern(
         smu,
         _pattern,
-        tuple(float_range2(0.0, args.max_gate_voltage, 100)),
+        tuple(float_range(0.0, args.max_gate_voltage, 0.001)),
         args.channel_voltage)
 
     _writer = csv.DictWriter(
