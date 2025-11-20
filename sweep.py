@@ -28,6 +28,9 @@ def sweep(
     for gvtg in gate_voltages:
         for dvtg in drain_voltages:
             yield take_reading(smu, gvtg, dvtg)
+    # turn off SMU after **ALL** readings are taken.
+    smu.smua.source.output = smu.smua.OUTPUT_OFF
+    smu.smub.source.output = smu.smub.OUTPUT_OFF
 
 
 def run_sweep(args: Namespace) -> int:
