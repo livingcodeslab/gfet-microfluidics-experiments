@@ -145,7 +145,10 @@ def run_experiment(args: Namespace) -> int:
     _values = run_pattern(
         smu,
         _pattern,
-        tuple(float_range(0.0, args.max_gate_voltage, 0.001)),
+        tuple(float_range(
+            -abs(args.max_gate_voltage),
+            abs(args.max_gate_voltage),
+            args.sweep_interval)),
         args.channel_voltage)
 
     _writer = csv.DictWriter(
@@ -217,9 +220,17 @@ def main():
             formatter_class=ArgumentDefaultsHelpFormatter)))
     run_expt_parser.add_argument(
         "--max-gate-voltage",
-        type=make_value_range_checker(-1.0, 1.0, "Gate Voltage"),
+        type=make_value_range_checker(0.1, 1.0, "Gate Voltage"),
         default=1.0,
         help="Voltage (in volts) to apply at the gate terminals. Unit ")
+    run_expt_parser.add_argument(
+        "--sweep_interval",
+        "--sweep-interval",
+        "--sweepinterval",
+        metavar="SWEEP-INTERVAL",
+        type=make_value_range_checker(0.00005, 0.1, "Gate Voltage"),
+        default=0.01,
+        help="The interval between 2 consecutive gate voltage values.")
     run_expt_parser.add_argument(
         "--channel-voltage",
         type=make_value_range_checker(0.0, 0.1, "Channel Voltage"),
