@@ -80,14 +80,16 @@ def pump_and_read(
     logger.debug("There are %s channel voltages.", len(channel_voltages))
     _counter = 0
     while _counter < seconds:
+        logger.info("Pump for 1 second.")
         command(1)
         logger.debug("remaining seconds for this run: %s", seconds-_counter)
+        logger.info("Begin sweep")
         for gatevtg in gate_voltages:
             logger.debug("gate voltage: %s", gatevtg)
             for chnvtg in channel_voltages:
                 logger.debug("channel voltage: %s", chnvtg)
                 yield take_reading(smu, gatevtg, chnvtg)
-
+        logger.info("Sweep complete.") # Watch indentation
         # Turn off SMU channels
         smu.smua.source.output = smu.smua.OUTPUT_OFF
         smu.smub.source.output = smu.smub.OUTPUT_OFF
