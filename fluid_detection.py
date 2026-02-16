@@ -19,6 +19,7 @@ from gdnasynth.keithley import initialise_smu
 from gdnasynth.microfluidics import (
     collect,
     REAGENT_CHANNELS,
+    cli_existing_channel,
     vent_chip2collection,
     prime_wash_to_channel,
     prime_reagent_to_channel,
@@ -298,6 +299,13 @@ if __name__ == "__main__":
             help=(
                 "The serial port path to the system device that grants access "
                 "to the microfluidics device. Default (/dev/ttyACM0)"))
+        init_mfd.add_argument(
+            "--channels",
+            type=cli_existing_channel,
+            default=[chan.value for chan in REAGENT_CHANNELS],
+            nargs="+",
+            help=("Specific channels to initialise. If none provided, "
+                  "initialise ALL available reagent channels."))
 
         reset_mfd = subcommands.add_parser(
             "reset-microfluidics-device",
