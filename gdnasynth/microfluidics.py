@@ -145,7 +145,10 @@ def prime_wash_on_all_lines(port: serial.Serial, seconds: int = 25, rpm: int = 3
         prime_wash_to_channel(port, channel, seconds, rpm)
 
 
-def initialise_microfluidics_device(mfd_port: serial.Serial):
+def initialise_microfluidics_device(
+        mfd_port: serial.Serial,
+        init_channels: tuple[Channel] = REAGENT_CHANNELS
+):
     logger.info("=== Initialise device ===")
     logger.info("Priming the wash line.")
     prime_wash_to_channel(mfd_port, Channel.WSHL)
@@ -153,7 +156,7 @@ def initialise_microfluidics_device(mfd_port: serial.Serial):
     prime_wash_on_all_lines(mfd_port)
 
     logger.info("Priming reagents to all channels")
-    for chan in REAGENT_CHANNELS:
+    for chan in init_channels:
         logger.debug(f"\tChannel {chan.value:02}")
         prime_reagent_to_channel(mfd_port, chan)
 
