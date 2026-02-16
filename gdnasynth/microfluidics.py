@@ -179,3 +179,14 @@ def reset_microfluidics_device(mfd_port: serial.Serial):
     logger.info("vent GFET")
     vent_chip2waste(mfd_port)
     logger.info("==================================")
+
+
+def cli_existing_channel(val: str) -> int:
+    """Check that provided channel is one of the reagent channels."""
+    _channels = tuple(chan.value for chan in REAGENT_CHANNELS)
+    _chan_value = int(val)
+    if _chan_value not in _channels:
+        raise ValueError(
+            f"Invalid channel {_chan_value}: Expected one or more of "
+            f"channels in ({', '.join(_channels)}).")
+    return _chan_value
