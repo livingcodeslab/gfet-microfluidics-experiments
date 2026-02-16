@@ -165,6 +165,7 @@ def run_experiment(args: Namespace) -> int:
     _writer.writeheader()
     for _value in _values:
         _writer.writerow(_value)
+        sys.stdout.flush()
 
     return 0
 

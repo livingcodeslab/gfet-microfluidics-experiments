@@ -55,6 +55,7 @@ def run_sweep(args: Namespace) -> int:
                 args.sweep_interval)),
             (args.channel_voltage, -args.channel_voltage)):
         writer.writerow(row)
+        sys.stdout.flush()
 
     return 0
 
