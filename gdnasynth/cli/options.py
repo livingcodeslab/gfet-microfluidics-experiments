@@ -13,7 +13,8 @@ def cli_add_logging_arg(parser: ArgumentParser) -> ArgumentParser:
                  "warning",
                  "info",
                  "debug"),
-        default="info")
+        default="info",
+        help="The severity of events that you want to log out.")
     return parser
 
 
@@ -23,9 +24,7 @@ def cli_add_smu_args(parser: ArgumentParser) -> ArgumentParser:
         "--smu-visa-address",
         type=str,
         default="ASRL/dev/ttyUSB0::INSTR",
-        help=(
-            "The VISA address to the source-measure unit. "
-            "Default (ASRL/dev/ttyUSB0::INSTR)"))
+        help="The VISA address to the source-measure unit.")
     parser.add_argument(
         "--line-frequency",
         type=int,
@@ -48,5 +47,5 @@ def cli_add_microfluidics_args(parser: ArgumentParser) -> ArgumentParser:
         default="/dev/ttyACM0",
         help=(
             "The serial port path to the system device that grants access "
-            "to the microfluidics device. Default (/dev/ttyACM0)"))
+            "to the microfluidics device."))
     return parser
