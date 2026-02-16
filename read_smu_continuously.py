@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 
 from gdnasynth.keithley import initialise_smu
-from gdnasynth.cli import cli_add_smu_args, cli_add_logging_arg
+from gdnasynth.cli.options import cli_add_smu_args, cli_add_logging_arg
 
 from gdnasynth.logging import set_loggers_level
 
