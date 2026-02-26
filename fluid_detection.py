@@ -26,12 +26,9 @@ from gdnasynth.microfluidics import (
     reset_microfluidics_device,
     initialise_microfluidics_device)
 
-from gdnasynth.logging import set_loggers_level
+from gdnasynth.logging import setup_logging
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    encoding="utf-8",
-    format="%(asctime)s - %(name)s - %(levelname)s — %(message)s")
 
 
 def list_serial_ports(show_all: bool = False):
@@ -380,9 +377,7 @@ if __name__ == "__main__":
             help="Label for the legend in the plot.")
 
         args = parser.parse_args()
-        logger.setLevel(getattr(logging, args.log_level.upper()))
-        set_loggers_level(('microfluidics',),
-                          logger.getEffectiveLevel())
+        setup_logging(args.log_level, logger, ("gdnasynth.microfluidics"))
 
         return dispatch_subcommand(args)
 
