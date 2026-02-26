@@ -48,7 +48,8 @@ def run_sweep(args: Namespace) -> int:
     for row in sweep(
             initialise_smu(args.smu_visa_address,
                            args.line_frequency,
-                           args.nplc),
+                           args.nplc,
+                           raise_keithley_errors=args.raise_keithley_errors),
             tuple(float_range(
                 -abs(args.gate_voltage),
                 abs(args.gate_voltage),
