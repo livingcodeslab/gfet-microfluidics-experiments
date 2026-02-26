@@ -101,7 +101,9 @@ def wash_common(port, seconds: int = 25, rpm: int = 36) -> bool:
     return wash(port, "COMMON", Channel.WSHL, seconds, rpm)
 
 
-def wash_chip(port, seconds: int = 25, rpm: int = 36) -> bool:
+# It takes approx 31 seconds to go from WASH (in primed state) to the
+# surface of the GFET. We want the wash to have run over the chip for a while
+def wash_chip(port, seconds: int = 31*3, rpm: int = 36) -> bool:
     """Wash common line, through chip and out to waste."""
     return wash(port, "COLLECTION", Channel.WSHL, seconds, rpm)
 
