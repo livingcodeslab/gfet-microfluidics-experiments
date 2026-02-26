@@ -161,7 +161,8 @@ def run_experiment(args: Namespace) -> int:
                     "drain_voltage",
                     "drain_current",
                     "measured_gate_voltage",
-                    "measured_gate_current"))
+                    "measured_gate_current"),
+        dialect="unix")
     _writer.writeheader()
     for _value in _values:
         _writer.writerow(_value)
