@@ -36,6 +36,12 @@ def cli_add_smu_args(parser: ArgumentParser) -> ArgumentParser:
         type=float,
         default=((0.001 + 25)/2),
         help="Number of power-line cycles: used for measurement integration.")
+    parser.add_argument(
+        "--raise-keithley-errors",
+        action="store_true",
+        help=(
+            "When the flag is present, all Keithley errors are raised as Python"
+        " exceptions."))
     return parser
 
 

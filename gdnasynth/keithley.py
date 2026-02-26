@@ -60,9 +60,15 @@ def device_stabilisation(inst: Keithley2600):
     logger.info("============================")
 
 
-def initialise_smu(visa_address, line_frequency: int, nplc: float) -> Keithley2600:
+def initialise_smu(
+        visa_address: str,
+        line_frequency: int,
+        nplc: float,
+        raise_keithley_errors: bool = False
+) -> Keithley2600:
     """Initialize the Source-Measure Unit device."""
-    smu = Keithley2600(visa_address)
+    smu = Keithley2600(visa_address,
+                       raise_keithley_errors=raise_keithley_errors)
 
     _int_time_ = __integration_time__(line_frequency, nplc)
     smu.set_integration_time(smu.smua, _int_time_)
