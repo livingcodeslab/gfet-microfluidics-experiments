@@ -75,6 +75,8 @@ def initialise_smu(
     smu.set_integration_time(smu.smub, _int_time_)
     smu.smua.source.func = smu.smua.OUTPUT_DCVOLTS
     smu.smub.source.func = smu.smub.OUTPUT_DCVOLTS
+    smu.smua.source.limiti = 0.1
+    smu.smub.source.limiti = 0.1
     device_stabilisation(smu)
     smu.smua.source.output = smu.smua.OUTPUT_OFF
     smu.smub.source.output = smu.smub.OUTPUT_OFF
