@@ -69,6 +69,7 @@ def initialise_smu(
     """Initialize the Source-Measure Unit device."""
     smu = Keithley2600(visa_address,
                        raise_keithley_errors=raise_keithley_errors)
+    logger.info("Keithley 2602B SMU Serial Number: %s", smu.localnode.serialno)
 
     _int_time_ = __integration_time__(line_frequency, nplc)
     smu.set_integration_time(smu.smua, _int_time_)
