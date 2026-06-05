@@ -172,7 +172,7 @@ def run_experiment(args: Namespace) -> int:
 
 
 def __genfilename__(outdir, source, middle):
-    return outdir.joinpath(f"{source.stem}_{middle}{source.suffix}")
+    return outdir.joinpath(f"{source.stem}-{middle}{source.suffix}")
 
 
 def process_data(args: Namespace) -> int:
