@@ -3,13 +3,15 @@ from urllib.parse import urljoin
 
 import requests
 
-from gdnasynth.ot2r.types import Configuration, HTTPRequestMethod
+from gdnasynth.ot2r.types import HTTPRequestMethod
+from gdnasynth.ot2r.commands.types import OpentronsVersion
 
 
 def send_request(
-        config: Configuration,
+        robot_address: str,
         endpoint: str,
         method: HTTPRequestMethod,
+        opentrons_version: OpentronsVersion,
         data: dict,
         **kwargs
 ) -> requests.Response:
@@ -35,7 +37,7 @@ def send_request(
 
         request_method = getattr(requests, _method)
         return request_method(
-            url=urljoin(config.robot_address, endpoint),
+            url=urljoin(robot_address, endpoint),
             **{
                 **kwargs,
                 ("params" if _method == "get" else "json"): data,
@@ -44,7 +46,7 @@ def send_request(
                     **kwargs.get("headers", {}),
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    "opentrons-version": str(config.opentrons_version)
+                    "opentrons-version": f"{opentrons_version}"
                 }
             })
     except AssertionError as _aerr:
