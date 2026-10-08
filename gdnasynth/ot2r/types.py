@@ -9,8 +9,7 @@ OpentronsVersion = Literal["*", 1, 2, 3]
 
 HTTPRequestMethod = Literal[
     # Not supported: "HEAD", "CONNECT", "OPTIONS", "TRACE"
-    "GET", "POST", "PUT", "DELETE", "PATCH",
-    "get", "post", "put", "delete", "patch"]
+    "GET", "POST", "PUT", "DELETE", "PATCH"]
 
 Mount = Literal["left", "right"]
 
