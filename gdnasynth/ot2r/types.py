@@ -4,8 +4,11 @@ from pathlib import Path
 from dataclasses import field, dataclass
 from typing import Literal, Sequence, Optional
 
+from gdnasynth.ot2r.commands.types import (OpentronsVersion,
+                                           opentrons_version)
 
-OpentronsVersion = Literal["*", 1, 2, 3]
+
+
 
 HTTPRequestMethod = Literal[
     # Not supported: "HEAD", "CONNECT", "OPTIONS", "TRACE"
@@ -42,7 +45,7 @@ class Configuration:
     labware_slots: Sequence[LabwareConfig] # Labware to use
     pipettes: Sequence[PipetteConfig] # Pipette(s) to use
 
-    opentrons_version: OpentronsVersion = 2
+    opentrons_version: OpentronsVersion = opentrons_version(2)
     custom_labware_definitions: Sequence[Path] = field(default_factory=tuple)
     python_protocol_file: Optional[Path] = None
 
