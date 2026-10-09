@@ -1,6 +1,6 @@
 """Types used in the commands."""
 from dataclasses import dataclass
-from typing import Union, Literal, NewType, Sequence, Optional
+from typing import Union, Literal, Sequence, Optional
 
 from gdnasynth.ot2r.commands.base_types import (NonEmptyString,
                                                 NumericOpentronsVersion)
@@ -47,7 +47,8 @@ def opentrons_version(val: Union[str, int]) -> OpentronsVersion:
             "integer greater than or equal to 2.")
 
 
-DefinitionURI = NewType("DefinitionURI", NonEmptyString)
+class DefinitionURI(NonEmptyString):
+    """Wraps NonEmptyString to distinguish `DefinitionURI` values"""
 
 
 @dataclass(frozen=True)
@@ -59,7 +60,10 @@ class LabwareOffsetVector:
 
 
 LocationSequenceKind = Literal["onAddressableArea", "onLabware", "onModule"]
-AddressableAreaName = NewType("AddressableAreaName", NonEmptyString)
+
+class AddressableAreaName(NonEmptyString):
+    """Wraps NonEmptyString to distinguish `AddressableAreaName` values"""
+
 @dataclass(frozen=True)
 class LocationSequence:
     """A LocationSequence object."""
