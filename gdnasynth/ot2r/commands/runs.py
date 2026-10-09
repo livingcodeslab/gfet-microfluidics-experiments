@@ -38,6 +38,7 @@ class EngineStatus(enum.Enum):
 @dataclass(frozen=True)
 class Run:
     """The type for a run."""
+    runType: RunType #Custom field - not expected/used by Opentrons HTTP API
     id: uuid.UUID
     createdAt: datetime.datetime
     status: EngineStatus
@@ -51,11 +52,7 @@ class Run:
     liquids: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
     liquidClasses: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
     labwareOffsets: LabwareOffsets = field(default_factory=tuple) #TODO: Identify type
-
-
-@dataclass(frozen=True)
-class NormalRun(Run):
-    """Type for a non-maintenance run."""
+    # The fields below are for normal runs only
     ok: bool = False
     runTimeParameters: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
     outputFileIds: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
@@ -69,17 +66,16 @@ def parse_status(val: str) -> EngineStatus:
     """Parse the value into a valid EngineStatus"""
     return {status.value: status for status in EngineStatus}[val]
 
-def parse_run_result(result) -> Run:
+
+def parse_run_result(result: dict, runtype: RunType) -> Run:
     """Parse the response json."""
     _run = {
+        "runType": runtype,
         **result,
         "createdAt": datetime.datetime.fromisoformat(result["createdAt"]),
         "status": parse_status(result["status"]),
         # TODO: parse all the sequences too.
     }
-    if all((key in result.keys() for key in
-            ("ok", "runTimeParameters", "outputFileIds"))):
-        return NormalRun(**_run)
     return Run(**_run)
 
 
@@ -93,7 +89,7 @@ def create_run(
         method="POST",
         opentrons_version=config.opentrons_version,
         data={"data": {"labwareOffsets": offsets}})
-    return parse_run_result(resp.json()["data"])
+    return parse_run_result(resp.json()["data"], runtype)
 
 # 2. Setup:
 #     a. Upload labware definition file ==> upload_definition
