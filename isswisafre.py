@@ -224,7 +224,7 @@ def main():
             formatter_class=ArgumentDefaultsHelpFormatter)))
     run_expt_parser.add_argument(
         "--max-gate-voltage",
-        type=make_value_range_checker(0.1, 1.0, "Gate Voltage"),
+        type=make_value_range_checker(0.1, 1.5, "Gate Voltage"),
         default=1.0,
         help="Voltage (in volts) to apply at the gate terminals. Unit ")
     run_expt_parser.add_argument(
@@ -232,7 +232,7 @@ def main():
         "--sweep-interval",
         "--sweepinterval",
         metavar="SWEEP-INTERVAL",
-        type=make_value_range_checker(0.00005, 0.1, "Gate Voltage"),
+        type=make_value_range_checker(0.00005, 0.1, "Sweep Interval"),
         default=0.01,
         help="The interval between 2 consecutive gate voltage values.")
     run_expt_parser.add_argument(

@@ -75,7 +75,7 @@ if __name__ == "__main__":
             "--gate-voltage",
             "--gatevoltage",
             metavar="GATE-VOLTAGE",
-            type=make_value_range_checker(0.1, 1.0, "Gate Voltage"),
+            type=make_value_range_checker(0.1, 1.5, "Gate Voltage"),
             default=1.0,
             help=("The gate voltage to use for the sweep. The script will "
                   "sweep from -(|GATE-VOLTAGE|) to +(|GATE-VOLTAGE|)."))
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             "--sweep-interval",
             "--sweepinterval",
             metavar="SWEEP-INTERVAL",
-            type=make_value_range_checker(0.00005, 0.1, "Gate Voltage"),
+            type=make_value_range_checker(0.00005, 0.1, "Sweep Interval"),
             default=0.01,
             help=("The gate voltage to use for the sweep. The script will "
                   "sweep from -(|GATE-VOLTAGE|) to +(|GATE-VOLTAGE|)."))
