@@ -1,12 +1,14 @@
 """Commands concerning runs."""
 import enum
+import json
 import uuid
 import datetime
+from pathlib import Path
 from typing import Any, Sequence
 from dataclasses import field, dataclass
 
 from gdnasynth.ot2r.http import send_request
-from gdnasynth.ot2r.commands.types import LabwareOffsets
+from gdnasynth.ot2r.commands.types import DefinitionURI, LabwareOffsets
 from gdnasynth.ot2r.types import Configuration, PipetteConfig, LabwareConfig
 
 ## Notes:
@@ -79,20 +81,51 @@ def parse_run_result(result: dict, runtype: RunType) -> Run:
     return Run(**_run)
 
 
+def run_endpoint(runtype: RunType) -> str:
+    """Return the base HTTP API endpoint for the given type of run."""
+    return f"/{runtype.value}s"
+
+
 def create_run(
         config: Configuration, runtype: RunType, offsets: LabwareOffsets
 ) -> Run:
     """Create a run on the robot."""
     resp = send_request(
         robot_address=config.robot_address,
-        endpoint=f"/{runtype.value}s",
+        endpoint=run_endpoint(runtype),
         method="POST",
         opentrons_version=config.opentrons_version,
         data={"data": {"labwareOffsets": offsets}})
     return parse_run_result(resp.json()["data"], runtype)
 
+
 # 2. Setup:
 #     a. Upload labware definition file ==> upload_definition
+def add_labware_definition(
+        config: Configuration,
+        run: Run,
+        definition: Path
+) -> DefinitionURI:
+    """Upload a custom labware definition for use by the given run.
+
+    :param config: The robot configuration information.
+    :type config: gdnasynth.ot2r.types.Configuration
+    :param run: The run the definition is uploaded for.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param definition: Path to the JSON labware definition file.
+    :type definition: pathlib.Path
+
+    :rtype gdnasynth.ot2r.commands.types.DefinitionURI
+    """
+    resp = send_request(
+        robot_address=config.robot_address,
+        endpoint=f"{run_endpoint(run.runType)}/{run.id}/labware_definitions",
+        method="POST",
+        opentrons_version=config.opentrons_version,
+        data={"data": json.loads(definition.read_text(encoding="utf-8"))})
+    return DefinitionURI(resp.json()["data"]["definitionUri"])
+
+
 #     b. Load labware
 #     c. Load pipette(s)
 #     d. Load protocol (to define liquids)
