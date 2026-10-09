@@ -79,8 +79,8 @@ def parse_run_result(result) -> Run:
     }
     if all((key in result.keys() for key in
             ("ok", "runTimeParameters", "outputFileIds"))):
-        return NormalRun(**result)# TODO: Fix
-    return Run(**result)# TODO: Fix
+        return NormalRun(**_run)
+    return Run(**_run)
 
 
 def create_run(
@@ -93,7 +93,7 @@ def create_run(
         method="POST",
         opentrons_version=config.opentrons_version,
         data={"data": {"labwareOffsets": offsets}})
-    return parse_run_result(resp.json())
+    return parse_run_result(resp.json()["data"])
 
 # 2. Setup:
 #     a. Upload labware definition file ==> upload_definition
