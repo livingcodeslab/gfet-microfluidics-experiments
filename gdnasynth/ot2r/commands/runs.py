@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any, Sequence
 from dataclasses import field, dataclass
 
-from gdnasynth.ot2r.http import send_request
+from gdnasynth.ot2r.http import RequestSender
 from gdnasynth.ot2r.commands.types import DefinitionURI, LabwareOffsets
-from gdnasynth.ot2r.types import Configuration, PipetteConfig, LabwareConfig
+from gdnasynth.ot2r.types import PipetteConfig, LabwareConfig
 
 ## Notes:
 # Difference between normal runs and  maintenance runs are:
@@ -87,14 +87,22 @@ def run_endpoint(runtype: RunType) -> str:
 
 
 def create_run(
-        config: Configuration, runtype: RunType, offsets: LabwareOffsets
+        runtype: RunType, offsets: LabwareOffsets, sender: RequestSender
 ) -> Run:
-    """Create a run on the robot."""
-    resp = send_request(
-        robot_address=config.robot_address,
+    """Create a run on the robot.
+
+    :param runtype: The type of run to create.
+    :type runtype: gdnasynth.ot2r.commands.runs.RunType
+    :param offsets: The initial labware offsets for the run.
+    :type offsets: gdnasynth.ot2r.commands.types.LabwareOffsets
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+
+    :rtype gdnasynth.ot2r.commands.runs.Run
+    """
+    resp = sender(
         endpoint=run_endpoint(runtype),
         method="POST",
-        opentrons_version=config.opentrons_version,
         data={"data": {"labwareOffsets": offsets}})
     return parse_run_result(resp.json()["data"], runtype)
 
@@ -102,26 +110,24 @@ def create_run(
 # 2. Setup:
 #     a. Upload labware definition file ==> upload_definition
 def add_labware_definition(
-        config: Configuration,
         run: Run,
-        definition: Path
+        definition: Path,
+        sender: RequestSender
 ) -> DefinitionURI:
     """Upload a custom labware definition for use by the given run.
 
-    :param config: The robot configuration information.
-    :type config: gdnasynth.ot2r.types.Configuration
     :param run: The run the definition is uploaded for.
     :type run: gdnasynth.ot2r.commands.runs.Run
     :param definition: Path to the JSON labware definition file.
     :type definition: pathlib.Path
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
 
     :rtype gdnasynth.ot2r.commands.types.DefinitionURI
     """
-    resp = send_request(
-        robot_address=config.robot_address,
+    resp = sender(
         endpoint=f"{run_endpoint(run.runType)}/{run.id}/labware_definitions",
         method="POST",
-        opentrons_version=config.opentrons_version,
         data={"data": json.loads(definition.read_text(encoding="utf-8"))})
     return DefinitionURI(resp.json()["data"]["definitionUri"])
 
