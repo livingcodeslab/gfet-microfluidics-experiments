@@ -4,8 +4,9 @@ import uuid
 import datetime
 from typing import Any, Sequence
 from dataclasses import field, dataclass
-from gdnasynth.ot2r.commands.types import LabwareOffsets
-from gdnasynth.ot2r.types import PipetteConfig, LabwareConfig
+
+from gdnasynth.ot2r.types import PipetteConfig
+from gdnasynth.ot2r.commands.types import LoadedLabware, LabwareOffsets
 
 
 class RunType(enum.Enum):
@@ -43,7 +44,7 @@ class Run:
     hasEverEnteredErrorRecovery: bool = False
     pipettes: Sequence[PipetteConfig] = field(default_factory=tuple)
     modules: Sequence[Any] = field(default_factory=tuple)  #TODO: Identify type
-    labware: Sequence[LabwareConfig] = field(default_factory=tuple)
+    labware: Sequence[LoadedLabware] = field(default_factory=tuple)
     liquids: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
     liquidClasses: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
     labwareOffsets: LabwareOffsets = field(default_factory=tuple) #TODO: Identify type

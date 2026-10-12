@@ -1,4 +1,5 @@
 """Types used in the commands."""
+import uuid
 from dataclasses import dataclass
 from typing import Union, Literal, Sequence, Optional
 
@@ -107,3 +108,12 @@ class LegacyLabwareOffset:
 
 
 LabwareOffsets = Sequence[Union[LegacyLabwareOffset, LabwareOffset]]
+
+@dataclass(frozen=True)
+class LoadedLabware:
+    """Labware object."""
+    id: uuid.UUID
+    loadName: NonEmptyString
+    definitionUri: DefinitionUri
+    location: dict # Locations on Opentrons devices are complex (incomplete).
+    # There might be more fields defined for these types. Verify later.
