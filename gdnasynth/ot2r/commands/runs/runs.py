@@ -7,7 +7,8 @@ from typing import Sequence, Union
 
 from gdnasynth.ot2r.http import RequestSender
 from gdnasynth.ot2r.commands.base_types import NonEmptyString
-from gdnasynth.ot2r.commands.types import (DefinitionUri,
+from gdnasynth.ot2r.commands.types import (Command,
+                                           DefinitionUri,
                                            LabwareOffset,
                                            LabwareOffsets,
                                            LocationSequence,
@@ -184,6 +185,40 @@ def add_labware_definition(
         method="POST",
         data={"data": json.loads(definition.read_text(encoding="utf-8"))})
     return DefinitionUri(resp.json()["data"]["definitionUri"])
+
+
+def _command_payload(command: Command) -> dict:
+    """Build the JSON payload for a command, omitting unset optionals."""
+    payload = {
+        "commandType": str(command.commandType),
+        "params": command.params,
+    }
+    if command.intent is not None:
+        payload["intent"] = command.intent
+    if command.key is not None:
+        payload["key"] = str(command.key)
+    return payload
+
+
+def enqueue_command(
+        run: Run, command: Command, sender: RequestSender
+) -> dict:
+    """Enqueue a command on the run.
+
+    :param run: The run to enqueue the command on.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param command: The command to enqueue.
+    :type command: gdnasynth.ot2r.commands.types.Command
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+
+    :rtype dict
+    """
+    resp = sender(
+        endpoint=f"{run_endpoint(run.runType)}/{run.id}/commands",
+        method="POST",
+        data={"data": _command_payload(command)})
+    return resp.json()["data"]
 
 
 #     b. Load labware
