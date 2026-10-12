@@ -6,7 +6,7 @@ from gdnasynth.ot2r.commands.base_types import (NonEmptyString,
                                                 NumericOpentronsVersion)
 ## Types encountered so far
 # 1. ✔ OpentronsVersion: Literal["*", 2, 3]
-# 2. ✔ DefinitionURI
+# 2. ✔ DefinitionUri
 # 3. ✔ AddressableAreaName
 # 4. ✔ LabwareOffsetVector
 # 5. ✔ LocationSequence
@@ -14,14 +14,14 @@ from gdnasynth.ot2r.commands.base_types import (NonEmptyString,
 # 7. ✔ ModuleModel
 # 8. LabwareOffsets: Sequence[Union[LegacyLabwareOffset, LabwareOffset]] = tuple()
 #    a. ✔ LegacyLabwareOffset
-#       - definitionUri: DefinitionURI
+#       - definitionUri: DefinitionUri
 #       - location: LegacyLabwareOffsetLocation
 #           - slotName: DeckSlotName
 #           - moduleModel: Optional[ModuleModel]
-#           - definitionUri: Optional[DefinitionURI]
+#           - definitionUri: Optional[DefinitionUri]
 #       - vector: LabwareOffsetVector
 #    b. ✔ LabwareOffset
-#       - definitionUri: DefinitionURI
+#       - definitionUri: DefinitionUri
 #       - locationSequence: Sequence[LocationSequence]
 #           - kind: Literal["onAddressableArea", "onLabware", "onModule"]
 #           - addressableAreaName: AddressableAreaName
@@ -44,11 +44,11 @@ def opentrons_version(val: Union[str, int]) -> OpentronsVersion:
     except ValueError as _verr:
         raise ValueError(
             "Invalid value! Expected either the literal '*' or an positive "
-            "integer greater than or equal to 2.")
+            "integer greater than or equal to 2.") from _verr
 
 
-class DefinitionURI(NonEmptyString):
-    """Wraps NonEmptyString to distinguish `DefinitionURI` values"""
+class DefinitionUri(NonEmptyString):
+    """Wraps NonEmptyString to distinguish `DefinitionUri` values"""
 
 
 @dataclass(frozen=True)
@@ -74,7 +74,7 @@ class LocationSequence:
 @dataclass(frozen=True)
 class LabwareOffset:
     """A LabwareOffset type."""
-    definitionURI: DefinitionURI
+    definitionUri: DefinitionUri
     locationSequence: Sequence[LocationSequence]
     vector: LabwareOffsetVector
 
@@ -95,13 +95,13 @@ class LegacyLabwareOffsetLocation:
     """LegacyLabwareOffsetLocation type."""
     slotName: DeckSlotName
     moduleModel: Optional[ModuleModel]
-    definitionUri: Optional[DefinitionURI]
+    definitionUri: Optional[DefinitionUri]
 
 
 @dataclass(frozen=True)
 class LegacyLabwareOffset:
     """LegacyLabwareOffset type."""
-    definitionUri: DefinitionURI
+    definitionUri: DefinitionUri
     location: LegacyLabwareOffsetLocation
     vector: LabwareOffsetVector
 

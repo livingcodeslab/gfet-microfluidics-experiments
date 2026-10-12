@@ -1,63 +1,18 @@
 """Commands concerning runs."""
-import enum
 import json
 import uuid
 import datetime
 from pathlib import Path
-from typing import Any, Sequence
-from dataclasses import field, dataclass
 
 from gdnasynth.ot2r.http import RequestSender
 from gdnasynth.ot2r.commands.types import DefinitionURI, LabwareOffsets
-from gdnasynth.ot2r.types import PipetteConfig, LabwareConfig
+
+from .types import Run, RunType, EngineStatus
 
 ## Notes:
 # Difference between normal runs and  maintenance runs are:
 # 1. endpoints: /runs vs. /maintenance_runs
 # 2. Normal runs need you to trigger 'play', maintenance runs don't
-class RunType(enum.Enum):
-    """Possible types of runs"""
-    NORMALRUN = "run"
-    MAINTENANCERUN = "maintenance_run"
-
-
-class EngineStatus(enum.Enum):
-    """Status of a run."""
-    IDLE = "idle"
-    RUNNING = "running"
-    PAUSED = "paused"
-    BLOCKED_BY_OPEN_DOOR = "blocked-by-open-door"
-    STOP_REQUESTED = "stop-requested"
-    FINISHING = "finishing"
-    AWAITING_RECOVERY = "awaiting-recovery"
-    AWAITING_RECOVERY_PAUSED = "awaiting-recovery-paused"
-    AWAITING_RECOVERY_BLOCKED_BY_OPEN_DOOR = "awaiting-recovery-blocked-by-open-door"
-    STOPPED = "stopped"
-    FAILED = "failed"
-    SUCCEEDED = "succeeded"
-
-
-@dataclass(frozen=True)
-class Run:
-    """The type for a run."""
-    runType: RunType #Custom field - not expected/used by Opentrons HTTP API
-    id: uuid.UUID
-    createdAt: datetime.datetime
-    status: EngineStatus
-    current: bool = False
-    actions: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
-    errors: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
-    hasEverEnteredErrorRecovery: bool = False
-    pipettes: Sequence[PipetteConfig] = field(default_factory=tuple)
-    modules: Sequence[Any] = field(default_factory=tuple)  #TODO: Identify type
-    labware: Sequence[LabwareConfig] = field(default_factory=tuple)
-    liquids: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
-    liquidClasses: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
-    labwareOffsets: LabwareOffsets = field(default_factory=tuple) #TODO: Identify type
-    # The fields below are for normal runs only
-    ok: bool = False
-    runTimeParameters: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
-    outputFileIds: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
 
 
 ## Steps involved in a maintenance run
@@ -71,14 +26,22 @@ def parse_status(val: str) -> EngineStatus:
 
 def parse_run_result(result: dict, runtype: RunType) -> Run:
     """Parse the response json."""
-    _run = {
+    return Run(**{
         "runType": runtype,
         **result,
+        "id": uuid.UUID(result["id"]),
         "createdAt": datetime.datetime.fromisoformat(result["createdAt"]),
         "status": parse_status(result["status"]),
-        # TODO: parse all the sequences too.
-    }
-    return Run(**_run)
+        # "actions": parse_run_actions(result["actions"]),
+        # "errors": parse_run_errors(result["errors"]),
+        # "pipettes": parse_pipettes(result["pipettes"]),
+        # "modules": parse_modules(result["pipettes"]),
+        # "labware": parse_labware(result["labware"]),
+        # "liquids": parse_liquids(result["liquids"]),
+        # "liquidClasses": parse_liquid_classes([result["liquidClasses"]]),
+        # "labwareOffsets": parse_labware_offsets(result["labwareOffsets"]),
+        # **parse_extra_normal_run_fields(result)
+    })
 
 
 def run_endpoint(runtype: RunType) -> str:
