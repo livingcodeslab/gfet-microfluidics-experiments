@@ -14,7 +14,8 @@ from gdnasynth.ot2r.commands.types import (DefinitionUri,
                                            AddressableAreaName,
                                            LabwareOffsetVector,
                                            LegacyLabwareOffset,
-                                           LegacyLabwareOffsetLocation)
+                                           LegacyLabwareOffsetLocation,
+                                           LoadedLabware)
 
 from .types import Run, RunType, EngineStatus
 
@@ -99,6 +100,21 @@ def parse_labware_offsets(data: Sequence[dict]) -> LabwareOffsets:
     return tuple(parse_labware_offset(offset) for offset in data)
 
 
+def parse_labware(data: Sequence[dict]) -> Sequence[LoadedLabware]:
+    """Parse the ``labware`` list from a run response.
+
+    The labware ``location`` is kept as a raw ``dict`` for now: Opentrons
+    locations are a complex union that we have not modelled yet.
+    """
+    return tuple(
+        LoadedLabware(
+            id=uuid.UUID(labware["id"]),
+            loadName=NonEmptyString(labware["loadName"]),
+            definitionUri=DefinitionUri(labware["definitionUri"]),
+            location=labware["location"])
+        for labware in data)
+
+
 def parse_run_result(result: dict, runtype: RunType) -> Run:
     """Parse the response json."""
     return Run(**{
@@ -111,7 +127,7 @@ def parse_run_result(result: dict, runtype: RunType) -> Run:
         # "errors": parse_run_errors(result["errors"]),
         # "pipettes": parse_pipettes(result["pipettes"]),
         # "modules": parse_modules(result["pipettes"]),
-        # "labware": parse_labware(result["labware"]),
+        "labware": parse_labware(result["labware"]),
         # "liquids": parse_liquids(result["liquids"]),
         # "liquidClasses": parse_liquid_classes([result["liquidClasses"]]),
         "labwareOffsets": parse_labware_offsets(result["labwareOffsets"]),
