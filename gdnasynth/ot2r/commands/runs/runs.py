@@ -3,9 +3,18 @@ import json
 import uuid
 import datetime
 from pathlib import Path
+from typing import Sequence, Union
 
 from gdnasynth.ot2r.http import RequestSender
-from gdnasynth.ot2r.commands.types import DefinitionURI, LabwareOffsets
+from gdnasynth.ot2r.commands.base_types import NonEmptyString
+from gdnasynth.ot2r.commands.types import (DefinitionUri,
+                                           LabwareOffset,
+                                           LabwareOffsets,
+                                           LocationSequence,
+                                           AddressableAreaName,
+                                           LabwareOffsetVector,
+                                           LegacyLabwareOffset,
+                                           LegacyLabwareOffsetLocation)
 
 from .types import Run, RunType, EngineStatus
 
@@ -24,6 +33,72 @@ def parse_status(val: str) -> EngineStatus:
     return {status.value: status for status in EngineStatus}[val]
 
 
+def parse_labware_offset_vector(data: dict) -> LabwareOffsetVector:
+    """Parse a single labware offset vector from the robot's response."""
+    return LabwareOffsetVector(x=data["x"], y=data["y"], z=data["z"])
+
+
+def parse_location_sequence(data: dict) -> LocationSequence:
+    """Parse a single location-sequence component from the robot's response.
+
+    The robot can return three kinds of component:
+
+    - ``onAddressableArea`` with an ``addressableAreaName``;
+    - ``onModule`` with a ``moduleModel``;
+    - ``onLabware`` with a ``labwareUri``.
+
+    The current ``LocationSequence`` type only models the first, so the
+    other two raise.  See the recommended type fix accompanying this
+    parser.
+    """
+    if data["kind"] != "onAddressableArea":
+        raise ValueError(
+            "Unsupported location-sequence component kind "
+            f"{data['kind']!r}: the LocationSequence type models only "
+            "'onAddressableArea' components.")
+    return LocationSequence(
+        kind="onAddressableArea",
+        addressableAreaName=AddressableAreaName(data["addressableAreaName"]))
+
+
+def parse_labware_offset(data: dict) -> Union[LegacyLabwareOffset, LabwareOffset]:
+    """Parse a single labware offset from the robot's response.
+
+    Every offset the robot returns carries a (deprecated) legacy
+    ``location``; newer runs additionally carry a ``locationSequence``.
+    When the sequence is present we build a ``LabwareOffset``, otherwise
+    a ``LegacyLabwareOffset``.
+    """
+    vector = parse_labware_offset_vector(data["vector"])
+    definition_uri = DefinitionUri(data["definitionUri"])
+    location_sequence = data.get("locationSequence")
+    if location_sequence is not None:
+        return LabwareOffset(
+            definitionUri=definition_uri,
+            locationSequence=tuple(
+                parse_location_sequence(component)
+                for component in location_sequence),
+            vector=vector)
+
+    location = data["location"]
+    return LegacyLabwareOffset(
+        definitionUri=definition_uri,
+        location=LegacyLabwareOffsetLocation(
+            slotName=location["slotName"],
+            moduleModel=(
+                NonEmptyString(location["moduleModel"])
+                if location.get("moduleModel") is not None else None),
+            definitionUri=(
+                DefinitionUri(location["definitionUri"])
+                if location.get("definitionUri") is not None else None)),
+        vector=vector)
+
+
+def parse_labware_offsets(data: Sequence[dict]) -> LabwareOffsets:
+    """Parse the ``labwareOffsets`` list from a run response."""
+    return tuple(parse_labware_offset(offset) for offset in data)
+
+
 def parse_run_result(result: dict, runtype: RunType) -> Run:
     """Parse the response json."""
     return Run(**{
@@ -39,7 +114,7 @@ def parse_run_result(result: dict, runtype: RunType) -> Run:
         # "labware": parse_labware(result["labware"]),
         # "liquids": parse_liquids(result["liquids"]),
         # "liquidClasses": parse_liquid_classes([result["liquidClasses"]]),
-        # "labwareOffsets": parse_labware_offsets(result["labwareOffsets"]),
+        "labwareOffsets": parse_labware_offsets(result["labwareOffsets"]),
         # **parse_extra_normal_run_fields(result)
     })
 
@@ -76,7 +151,7 @@ def add_labware_definition(
         run: Run,
         definition: Path,
         sender: RequestSender
-) -> DefinitionURI:
+) -> DefinitionUri:
     """Upload a custom labware definition for use by the given run.
 
     :param run: The run the definition is uploaded for.
@@ -86,13 +161,13 @@ def add_labware_definition(
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
 
-    :rtype gdnasynth.ot2r.commands.types.DefinitionURI
+    :rtype gdnasynth.ot2r.commands.types.DefinitionUri
     """
     resp = sender(
         endpoint=f"{run_endpoint(run.runType)}/{run.id}/labware_definitions",
         method="POST",
         data={"data": json.loads(definition.read_text(encoding="utf-8"))})
-    return DefinitionURI(resp.json()["data"]["definitionUri"])
+    return DefinitionUri(resp.json()["data"]["definitionUri"])
 
 
 #     b. Load labware
