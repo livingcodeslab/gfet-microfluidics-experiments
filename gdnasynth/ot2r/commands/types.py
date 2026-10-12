@@ -150,3 +150,14 @@ class APIError:
     errorCode: NonEmptyString
     source: Optional[dict] = None
     meta: Optional[dict] = None
+
+
+CommandIntent = Literal["protocol", "setup", "fixit"]
+
+
+@dataclass(frozen=True)
+class Command:
+    commandType: NonEmptyString # 100+ commands, Literal[...] is too verbose
+    params: dict # Varies by `commandType`, no checks here for now
+    intent: Optional[CommandIntent] = None   # None == server's "protocol"
+    key: Optional[NonEmptyString] = None
