@@ -1,7 +1,8 @@
 """Types used in the commands."""
 import uuid
-from dataclasses import dataclass
-from typing import Union, Literal, Sequence, Optional
+import datetime
+from dataclasses import field, dataclass
+from typing import Any, Union, Literal, Mapping, Sequence, Optional
 
 from gdnasynth.ot2r.commands.base_types import (NonEmptyString,
                                                 NumericOpentronsVersion)
@@ -117,3 +118,35 @@ class LoadedLabware:
     definitionUri: DefinitionUri
     location: dict # Locations on Opentrons devices are complex (incomplete).
     # There might be more fields defined for these types. Verify later.
+
+
+@dataclass(frozen=True)
+class RunError:
+    """A protocol-engine error occurrence.
+
+    Appears both as a command's ``error`` and as an entry in a run's
+    ``errors`` list.  (Upstream: protocol_engine ``ErrorOccurrence``.)
+    """
+    id: NonEmptyString
+    createdAt: datetime.datetime
+    errorType: NonEmptyString
+    detail: NonEmptyString
+    errorCode: NonEmptyString
+    isDefined: bool = False
+    errorInfo: Mapping[str, Any] = field(default_factory=dict)
+    wrappedErrors: Sequence['RunError'] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class APIError:
+    """A robot-server HTTP error.
+
+    Returned in the ``errors`` list of an error response body, e.g.
+    ``{"errors": [...]}``.  (Upstream: robot-server ``ErrorDetails``.)
+    """
+    id: NonEmptyString
+    title: NonEmptyString
+    detail: NonEmptyString
+    errorCode: NonEmptyString
+    source: Optional[dict] = None
+    meta: Optional[dict] = None
