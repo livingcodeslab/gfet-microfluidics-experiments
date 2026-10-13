@@ -572,3 +572,25 @@ def list_commands(sender: RequestSender, run: Run) -> Sequence[dict]:
         method="GET",
         data={})
     return resp.json()["data"]
+
+
+def get_command(
+        sender: RequestSender, run: Run, command_id: uuid.UUID
+) -> dict:
+    """Get a single command from the run by its id.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param run: The run the command belongs to.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param command_id: The id of the command to get.
+    :type command_id: uuid.UUID
+
+    :rtype dict
+    """
+    resp = sender(
+        endpoint=(f"{run_endpoint(run.runType)}/{run.id}/commands/"
+                  f"{command_id}"),
+        method="GET",
+        data={})
+    return resp.json()["data"]
