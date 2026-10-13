@@ -1,9 +1,14 @@
-"""Tests for the setup command helpers load_labware / load_pipette."""
+"""Tests for the setup helpers add_labware_definition / load_labware /
+load_pipette."""
 import datetime
+import json
 import uuid
 
-from gdnasynth.ot2r.commands.runs.runs import load_labware, load_pipette
+from gdnasynth.ot2r.commands.runs.runs import (add_labware_definition,
+                                               load_labware,
+                                               load_pipette)
 from gdnasynth.ot2r.commands.runs.types import EngineStatus, Run, RunType
+from gdnasynth.ot2r.commands.types import DefinitionUri
 from gdnasynth.ot2r.types import LabwareConfig, PipetteConfig
 
 RUN_ID = "4023a0e2-d70d-4f6e-91f7-9808dd170273"
@@ -25,14 +30,46 @@ def _run():
                status=EngineStatus.IDLE)
 
 
-def _capture():
+def _capture(payload=None):
     calls = []
 
     def sender(endpoint, method, data, **kwargs):
         calls.append({"endpoint": endpoint, "method": method, "data": data})
-        return _FakeResponse({"data": {"id": "cmd-1", "status": "queued"}})
+        return _FakeResponse(
+            payload if payload is not None
+            else {"data": {"id": "cmd-1", "status": "queued"}})
 
     return sender, calls
+
+
+def test_add_labware_definition(tmp_path):
+    """Test that add_labware_definition uploads a definition file.
+
+    GIVEN: a labware definition JSON file and a capturing sender
+    WHEN: add_labware_definition(...) is called
+    THEN: the definition is POSTed and its DefinitionUri is returned
+    """
+    definition = {
+        "ordering": [],
+        "brand": {"brand": "livingcodeslab"},
+        "metadata": {"displayName": "Graphenea card adapter"},
+    }
+    path = tmp_path / "definition.json"
+    path.write_text(json.dumps(definition), encoding="utf-8")
+
+    sender, calls = _capture({
+        "data": {"definitionUri":
+                 "livingcodeslab/livingcodeslab_graphenea_card_adapter/1"}})
+
+    uri = add_labware_definition(_run(), path, sender)
+
+    assert calls[-1]["endpoint"] == (
+        f"/maintenance_runs/{RUN_ID}/labware_definitions")
+    assert calls[-1]["method"] == "POST"
+    assert calls[-1]["data"] == {"data": definition}
+    assert isinstance(uri, DefinitionUri)
+    assert str(uri) == (
+        "livingcodeslab/livingcodeslab_graphenea_card_adapter/1")
 
 
 def test_load_labware():
