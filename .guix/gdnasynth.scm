@@ -27,6 +27,7 @@
     (native-inputs
      (list python-mypy
            python-pylint
+           python-pytest
            python-typing-extensions))
     (propagated-inputs
      (list python-requests
