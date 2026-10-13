@@ -301,3 +301,36 @@ def enqueue_command(
 ## Enqueue Command(s)
 #
 # The command params vary by command type
+
+
+def pick_up_tip(
+        run: Run,
+        pipette: PipetteConfig,
+        labware: LabwareConfig,
+        well_name: str,
+        sender: RequestSender
+) -> dict:
+    """Enqueue a ``pickUpTip`` command for the run.
+
+    :param run: The run to pick up a tip in.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param pipette: The pipette to use.
+    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :param labware: The tiprack to pick the tip from.
+    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :param well_name: The well to pick the tip from.
+    :type well_name: str
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+
+    :rtype dict
+    """
+    command = Command(
+        commandType=NonEmptyString("pickUpTip"),
+        params={
+            "pipetteId": str(pipette.pipette_id),
+            "labwareId": str(labware.labware_id),
+            "wellName": well_name,
+        },
+        intent="protocol")
+    return enqueue_command(run, command, sender)
