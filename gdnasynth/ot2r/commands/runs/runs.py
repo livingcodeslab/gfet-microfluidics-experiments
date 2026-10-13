@@ -522,3 +522,20 @@ def get_run(
         method="GET",
         data={})
     return parse_run_result(resp.json()["data"], runtype)
+
+
+def get_current_run(sender: RequestSender, runtype: RunType) -> Run:
+    """Get the current run.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param runtype: The type of run to get.
+    :type runtype: gdnasynth.ot2r.commands.runs.RunType
+
+    :rtype gdnasynth.ot2r.commands.runs.Run
+    """
+    resp = sender(
+        endpoint=f"{run_endpoint(runtype)}/current_run",
+        method="GET",
+        data={})
+    return parse_run_result(resp.json()["data"], runtype)
