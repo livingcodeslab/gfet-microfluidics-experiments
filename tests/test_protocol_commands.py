@@ -126,3 +126,24 @@ def test_dispense():
         "volume": 10.0,
         "flowRate": 7.56,
     }
+
+
+def test_drop_tip():
+    """Test that drop_tip enqueues a dropTip command.
+
+    GIVEN: a pipette, a tiprack and a capturing sender
+    WHEN: drop_tip(...) is called
+    THEN: a dropTip command is enqueued with a protocol intent
+    """
+    sender, calls = _capture()
+
+    runs.drop_tip(_run(), _pipette(), _tiprack(), "A1", sender)
+
+    command = calls[-1]["data"]["data"]
+    assert str(command.commandType) == "dropTip"
+    assert command.intent == "protocol"
+    assert command.params == {
+        "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
+        "labwareId": "32dbb5b7-710d-428b-bff0-03e31351e25f",
+        "wellName": "A1",
+    }
