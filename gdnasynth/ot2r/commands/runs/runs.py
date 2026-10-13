@@ -416,3 +416,36 @@ def dispense(
         },
         intent="protocol")
     return enqueue_command(run, command, sender)
+
+
+def drop_tip(
+        run: Run,
+        pipette: PipetteConfig,
+        labware: LabwareConfig,
+        well_name: str,
+        sender: RequestSender
+) -> dict:
+    """Enqueue a ``dropTip`` command for the run.
+
+    :param run: The run to drop the tip in.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param pipette: The pipette to use.
+    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :param labware: The labware to drop the tip into.
+    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :param well_name: The well to drop the tip into.
+    :type well_name: str
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+
+    :rtype dict
+    """
+    command = Command(
+        commandType=NonEmptyString("dropTip"),
+        params={
+            "pipetteId": str(pipette.pipette_id),
+            "labwareId": str(labware.labware_id),
+            "wellName": well_name,
+        },
+        intent="protocol")
+    return enqueue_command(run, command, sender)
