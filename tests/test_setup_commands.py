@@ -62,7 +62,7 @@ def test_add_labware_definition(tmp_path):
         "data": {"definitionUri":
                  "livingcodeslab/livingcodeslab_graphenea_card_adapter/1"}})
 
-    uri = add_labware_definition(_run(), path, sender)
+    uri = add_labware_definition(sender, _run(), path)
 
     assert calls[-1]["endpoint"] == (
         f"/maintenance_runs/{RUN_ID}/labware_definitions")
@@ -87,7 +87,7 @@ def test_load_labware():
         labware_id=uuid.UUID("32dbb5b7-710d-428b-bff0-03e31351e25f"),
         namespace="opentrons")
 
-    load_labware(_run(), labware, sender)
+    load_labware(sender, _run(), labware)
 
     command = calls[-1]["data"]["data"]
     assert calls[-1]["endpoint"] == f"/maintenance_runs/{RUN_ID}/commands"
@@ -116,7 +116,7 @@ def test_load_pipette():
         mount="left",
         pipette_id=uuid.UUID("7806a233-8012-4d99-8887-970935f103e1"))
 
-    load_pipette(_run(), pipette, sender)
+    load_pipette(sender, _run(), pipette)
 
     command = calls[-1]["data"]["data"]
     assert calls[-1]["endpoint"] == f"/maintenance_runs/{RUN_ID}/commands"

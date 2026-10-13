@@ -147,7 +147,7 @@ def run_endpoint(runtype: RunType) -> str:
 
 
 def create_run(
-        runtype: RunType, offsets: LabwareOffsets, sender: RequestSender
+        sender: RequestSender, runtype: RunType, offsets: LabwareOffsets
 ) -> Run:
     """Create a run on the robot.
 
@@ -171,9 +171,9 @@ def create_run(
 # 2. Setup:
 #     a. Upload labware definition file ==> upload_definition
 def add_labware_definition(
+        sender: RequestSender,
         run: Run,
-        definition: Path,
-        sender: RequestSender
+        definition: Path
 ) -> DefinitionUri:
     """Upload a custom labware definition for use by the given run.
 
@@ -194,7 +194,7 @@ def add_labware_definition(
 
 
 def load_labware(
-        run: Run, labware: LabwareConfig, sender: RequestSender
+        sender: RequestSender, run: Run, labware: LabwareConfig
 ) -> dict:
     """Enqueue a ``loadLabware`` command for the run.
 
@@ -217,11 +217,11 @@ def load_labware(
             "labwareId": str(labware.labware_id),
         },
         intent="setup")
-    return enqueue_command(run, command, sender)
+    return enqueue_command(sender, run, command)
 
 
 def load_pipette(
-        run: Run, pipette: PipetteConfig, sender: RequestSender
+        sender: RequestSender, run: Run, pipette: PipetteConfig
 ) -> dict:
     """Enqueue a ``loadPipette`` command for the run.
 
@@ -242,11 +242,11 @@ def load_pipette(
             "pipetteId": str(pipette.pipette_id),
         },
         intent="setup")
-    return enqueue_command(run, command, sender)
+    return enqueue_command(sender, run, command)
 
 
 def enqueue_command(
-        run: Run, command: Command, sender: RequestSender
+        sender: RequestSender, run: Run, command: Command
 ) -> dict:
     """Enqueue a command on the run.
 
@@ -304,11 +304,11 @@ def enqueue_command(
 
 
 def pick_up_tip(
+        sender: RequestSender,
         run: Run,
         pipette: PipetteConfig,
         labware: LabwareConfig,
-        well_name: str,
-        sender: RequestSender
+        well_name: str
 ) -> dict:
     """Enqueue a ``pickUpTip`` command for the run.
 
@@ -333,17 +333,17 @@ def pick_up_tip(
             "wellName": well_name,
         },
         intent="protocol")
-    return enqueue_command(run, command, sender)
+    return enqueue_command(sender, run, command)
 
 
 def aspirate(
+        sender: RequestSender,
         run: Run,
         pipette: PipetteConfig,
         labware: LabwareConfig,
         well_name: str,
         volume: float,
-        flow_rate: float,
-        sender: RequestSender
+        flow_rate: float
 ) -> dict:
     """Enqueue an ``aspirate`` command for the run.
 
@@ -374,17 +374,17 @@ def aspirate(
             "flowRate": flow_rate,
         },
         intent="protocol")
-    return enqueue_command(run, command, sender)
+    return enqueue_command(sender, run, command)
 
 
 def dispense(
+        sender: RequestSender,
         run: Run,
         pipette: PipetteConfig,
         labware: LabwareConfig,
         well_name: str,
         volume: float,
-        flow_rate: float,
-        sender: RequestSender
+        flow_rate: float
 ) -> dict:
     """Enqueue a ``dispense`` command for the run.
 
@@ -415,15 +415,15 @@ def dispense(
             "flowRate": flow_rate,
         },
         intent="protocol")
-    return enqueue_command(run, command, sender)
+    return enqueue_command(sender, run, command)
 
 
 def drop_tip(
+        sender: RequestSender,
         run: Run,
         pipette: PipetteConfig,
         labware: LabwareConfig,
-        well_name: str,
-        sender: RequestSender
+        well_name: str
 ) -> dict:
     """Enqueue a ``dropTip`` command for the run.
 
@@ -448,10 +448,10 @@ def drop_tip(
             "wellName": well_name,
         },
         intent="protocol")
-    return enqueue_command(run, command, sender)
+    return enqueue_command(sender, run, command)
 
 
-def home(run: Run, sender: RequestSender) -> dict:
+def home(sender: RequestSender, run: Run) -> dict:
     """Enqueue a ``home`` command for the run.
 
     :param run: The run to home.
@@ -465,4 +465,4 @@ def home(run: Run, sender: RequestSender) -> dict:
         commandType=NonEmptyString("home"),
         params={},
         intent="protocol")
-    return enqueue_command(run, command, sender)
+    return enqueue_command(sender, run, command)

@@ -59,7 +59,7 @@ def test_pick_up_tip():
     """
     sender, calls = _capture()
 
-    runs.pick_up_tip(_run(), _pipette(), _tiprack(), "A1", sender)
+    runs.pick_up_tip(sender, _run(), _pipette(), _tiprack(), "A1")
 
     command = calls[-1]["data"]["data"]
     assert calls[-1]["endpoint"] == f"/maintenance_runs/{RUN_ID}/commands"
@@ -86,7 +86,8 @@ def test_aspirate():
         load_slot=3,
         labware_id=uuid.UUID("fe305793-e2b6-40ce-94d7-2b55549b1b57"))
 
-    runs.aspirate(_run(), _pipette(), reservoir, "A1", 10.0, 7.56, sender)
+    runs.aspirate(sender, _run(), _pipette(), reservoir, "A1",
+                  10.0, 7.56)
 
     command = calls[-1]["data"]["data"]
     assert str(command.commandType) == "aspirate"
@@ -114,7 +115,8 @@ def test_dispense():
         labware_id=uuid.UUID("c9c762e1-8205-4ccd-be32-6535fd0e9514"),
         namespace="livingcodeslab")
 
-    runs.dispense(_run(), _pipette(), chip, "A1", 10.0, 7.56, sender)
+    runs.dispense(sender, _run(), _pipette(), chip, "A1",
+                  10.0, 7.56)
 
     command = calls[-1]["data"]["data"]
     assert str(command.commandType) == "dispense"
@@ -137,7 +139,7 @@ def test_drop_tip():
     """
     sender, calls = _capture()
 
-    runs.drop_tip(_run(), _pipette(), _tiprack(), "A1", sender)
+    runs.drop_tip(sender, _run(), _pipette(), _tiprack(), "A1")
 
     command = calls[-1]["data"]["data"]
     assert str(command.commandType) == "dropTip"
@@ -158,7 +160,7 @@ def test_home():
     """
     sender, calls = _capture()
 
-    runs.home(_run(), sender)
+    runs.home(sender, _run())
 
     command = calls[-1]["data"]["data"]
     assert str(command.commandType) == "home"
