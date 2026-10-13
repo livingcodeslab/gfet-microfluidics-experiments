@@ -334,3 +334,44 @@ def pick_up_tip(
         },
         intent="protocol")
     return enqueue_command(run, command, sender)
+
+
+def aspirate(
+        run: Run,
+        pipette: PipetteConfig,
+        labware: LabwareConfig,
+        well_name: str,
+        volume: float,
+        flow_rate: float,
+        sender: RequestSender
+) -> dict:
+    """Enqueue an ``aspirate`` command for the run.
+
+    :param run: The run to aspirate in.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param pipette: The pipette to use.
+    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :param labware: The labware to aspirate from.
+    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :param well_name: The well to aspirate from.
+    :type well_name: str
+    :param volume: The volume to aspirate, in µL.
+    :type volume: float
+    :param flow_rate: The flow rate to aspirate at, in µL/s.
+    :type flow_rate: float
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+
+    :rtype dict
+    """
+    command = Command(
+        commandType=NonEmptyString("aspirate"),
+        params={
+            "pipetteId": str(pipette.pipette_id),
+            "labwareId": str(labware.labware_id),
+            "wellName": well_name,
+            "volume": volume,
+            "flowRate": flow_rate,
+        },
+        intent="protocol")
+    return enqueue_command(run, command, sender)
