@@ -147,3 +147,20 @@ def test_drop_tip():
         "labwareId": "32dbb5b7-710d-428b-bff0-03e31351e25f",
         "wellName": "A1",
     }
+
+
+def test_home():
+    """Test that home enqueues a home command.
+
+    GIVEN: a capturing sender
+    WHEN: home(...) is called
+    THEN: a home command is enqueued with a protocol intent
+    """
+    sender, calls = _capture()
+
+    runs.home(_run(), sender)
+
+    command = calls[-1]["data"]["data"]
+    assert str(command.commandType) == "home"
+    assert command.intent == "protocol"
+    assert command.params == {}
