@@ -555,3 +555,20 @@ def delete_run(sender: RequestSender, run: Run) -> None:
         endpoint=f"{run_endpoint(run.runType)}/{run.id}",
         method="DELETE",
         data={})
+
+
+def list_commands(sender: RequestSender, run: Run) -> Sequence[dict]:
+    """List the run's commands.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param run: The run whose commands to list.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+
+    :rtype Sequence[dict]
+    """
+    resp = sender(
+        endpoint=f"{run_endpoint(run.runType)}/{run.id}/commands",
+        method="GET",
+        data={})
+    return resp.json()["data"]
