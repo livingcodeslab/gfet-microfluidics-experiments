@@ -24,6 +24,7 @@ class LabwareConfig:
     load_slot: int
     labware_id: uuid.UUID = field(default_factory=uuid.uuid4)
     version: int = 1
+    namespace: str = "opentrons"
 
 
 @dataclass(frozen=True)

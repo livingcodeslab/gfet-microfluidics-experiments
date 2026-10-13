@@ -18,6 +18,8 @@ from gdnasynth.ot2r.commands.types import (Command,
                                            LegacyLabwareOffsetLocation,
                                            LoadedLabware)
 
+from gdnasynth.ot2r.types import LabwareConfig, PipetteConfig
+
 from .types import Run, RunType, EngineStatus
 
 ## Notes:
@@ -185,6 +187,58 @@ def add_labware_definition(
         method="POST",
         data={"data": json.loads(definition.read_text(encoding="utf-8"))})
     return DefinitionUri(resp.json()["data"]["definitionUri"])
+
+
+def load_labware(
+        run: Run, labware: LabwareConfig, sender: RequestSender
+) -> dict:
+    """Enqueue a ``loadLabware`` command for the run.
+
+    :param run: The run to load the labware into.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param labware: The labware configuration to load.
+    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+
+    :rtype dict
+    """
+    command = Command(
+        commandType=NonEmptyString("loadLabware"),
+        params={
+            "location": {"slotName": str(labware.load_slot)},
+            "loadName": labware.labware_name,
+            "namespace": labware.namespace,
+            "version": labware.version,
+            "labwareId": str(labware.labware_id),
+        },
+        intent="setup")
+    return enqueue_command(run, command, sender)
+
+
+def load_pipette(
+        run: Run, pipette: PipetteConfig, sender: RequestSender
+) -> dict:
+    """Enqueue a ``loadPipette`` command for the run.
+
+    :param run: The run to load the pipette into.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param pipette: The pipette configuration to load.
+    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+
+    :rtype dict
+    """
+    command = Command(
+        commandType=NonEmptyString("loadPipette"),
+        params={
+            "pipetteName": pipette.pipette_name,
+            "mount": pipette.mount,
+            "pipetteId": str(pipette.pipette_id),
+        },
+        intent="setup")
+    return enqueue_command(run, command, sender)
 
 
 def enqueue_command(
