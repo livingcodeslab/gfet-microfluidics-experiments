@@ -98,3 +98,31 @@ def test_aspirate():
         "volume": 10.0,
         "flowRate": 7.56,
     }
+
+
+def test_dispense():
+    """Test that dispense enqueues a dispense command.
+
+    GIVEN: a pipette, a chip and a capturing sender
+    WHEN: dispense(...) is called
+    THEN: a dispense command is enqueued with a protocol intent
+    """
+    sender, calls = _capture()
+    chip = LabwareConfig(
+        labware_name="livingcodeslab_graphenea_card_adapter",
+        load_slot=1,
+        labware_id=uuid.UUID("c9c762e1-8205-4ccd-be32-6535fd0e9514"),
+        namespace="livingcodeslab")
+
+    runs.dispense(_run(), _pipette(), chip, "A1", 10.0, 7.56, sender)
+
+    command = calls[-1]["data"]["data"]
+    assert str(command.commandType) == "dispense"
+    assert command.intent == "protocol"
+    assert command.params == {
+        "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
+        "labwareId": "c9c762e1-8205-4ccd-be32-6535fd0e9514",
+        "wellName": "A1",
+        "volume": 10.0,
+        "flowRate": 7.56,
+    }
