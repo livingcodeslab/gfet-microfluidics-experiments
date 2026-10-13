@@ -1,13 +1,56 @@
 """Interact with the Opentrons OT-2R via the HTTP API"""
 from functools import partial
-from typing import Any, Protocol
+from typing import Any, Protocol, Sequence
 from urllib.parse import urljoin
 
 import requests
 
 from gdnasynth.ot2r.types import HTTPRequestMethod
-from gdnasynth.ot2r.commands.types import OpentronsVersion
+from gdnasynth.ot2r.commands.base_types import NonEmptyString
+from gdnasynth.ot2r.commands.types import APIError, OpentronsVersion
 from gdnasynth.ot2r.serialization import to_jsonable
+
+
+_GENERAL_ERROR_CODE = "4000"
+
+
+class RobotError(Exception):
+    """Base class for errors talking to the OT-2R robot."""
+
+
+class RobotUnreachable(RobotError):
+    """The robot could not be reached (powered off, network down, ...)."""
+
+
+class RobotResponseError(RobotError):
+    """The robot returned an error response (HTTP status >= 400)."""
+
+    def __init__(
+            self,
+            status_code: int,
+            body: str,
+            api_errors: Sequence[APIError] = ()
+    ) -> None:
+        self.status_code = status_code
+        self.body = body
+        self.api_errors = tuple(api_errors)
+        super().__init__(
+            f"OT-2R robot responded with HTTP {status_code}: "
+            f"{body.strip() or '<empty body>'}")
+
+
+def parse_api_errors(data: Sequence[dict]) -> Sequence[APIError]:
+    """Parse the ``errors`` list of a robot-server error envelope."""
+    return tuple(
+        APIError(
+            id=NonEmptyString(item["id"]),
+            title=NonEmptyString(item.get("title", item["id"])),
+            detail=NonEmptyString(item["detail"]),
+            errorCode=NonEmptyString(
+                item.get("errorCode", _GENERAL_ERROR_CODE)),
+            source=item.get("source"),
+            meta=item.get("meta"))
+        for item in data)
 
 
 class RequestSender(Protocol):
@@ -45,6 +88,18 @@ def make_request_sender(
         opentrons_version=opentrons_version)
 
 
+def _response_error(response: requests.Response) -> RobotResponseError:
+    """Build a RobotResponseError, parsing an API error envelope if present."""
+    api_errors: Sequence[APIError] = ()
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = None
+    if isinstance(payload, dict) and "errors" in payload:
+        api_errors = parse_api_errors(payload["errors"])
+    return RobotResponseError(response.status_code, response.text, api_errors)
+
+
 def send_request(
         robot_address: str,
         endpoint: str,
@@ -68,15 +123,21 @@ def send_request(
 
     :rtype requests.Response
 
-    :raises AssertionError: If the method is not one of the expected HTTP methods.
-    :raises AttributeError:
+    :raises AttributeError: if the method is not supported.
+    :raises RobotUnreachable: if the robot cannot be reached.
+    :raises RobotResponseError: if the robot responds with HTTP status >= 400.
     """
     try:
         _method = method.lower()
         assert _method in ("get", "post", "put", "delete", "patch")
+    except AssertionError as _aerr:
+        raise AttributeError(
+            "You attempted to send a HTTP request with an unsupported method "
+            f"({_method.upper()}) to the OT-2R robot.") from _aerr
 
-        request_method = getattr(requests, _method)
-        return request_method(
+    request_method = getattr(requests, _method)
+    try:
+        response = request_method(
             url=urljoin(robot_address, endpoint),
             **{
                 **kwargs,
@@ -89,7 +150,11 @@ def send_request(
                     "opentrons-version": f"{opentrons_version}"
                 }
             })
-    except AssertionError as _aerr:
-        raise AttributeError(
-            "You attempted to send a HTTP request with an unsupported method "
-            f"({_method.upper()}) to the OT-2R robot.") from _aerr
+    except requests.exceptions.RequestException as _reqerr:
+        raise RobotUnreachable(
+            f"Could not reach the OT-2R robot at {robot_address}."
+        ) from _reqerr
+
+    if response.status_code >= 400:
+        raise _response_error(response)
+    return response
