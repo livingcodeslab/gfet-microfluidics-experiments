@@ -166,3 +166,31 @@ def test_home():
     assert str(command.commandType) == "home"
     assert command.intent == "protocol"
     assert command.params == {}
+
+
+def test_trash_tip():
+    """Test that trash_tip moves to the trash and drops the tip.
+
+    GIVEN: a pipette and a capturing sender
+    WHEN: trash_tip(...) is called
+    THEN: moveToAddressableAreaForDropTip and dropTipInPlace are enqueued
+    """
+    sender, calls = _capture()
+
+    result = runs.trash_tip(sender, _run(), _pipette())
+
+    move = calls[-2]["data"]["data"]
+    drop = calls[-1]["data"]["data"]
+    assert calls[-2]["endpoint"] == f"/maintenance_runs/{RUN_ID}/commands"
+    assert str(move.commandType) == "moveToAddressableAreaForDropTip"
+    assert move.intent == "protocol"
+    assert move.params == {
+        "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
+        "addressableAreaName": "fixedTrash",
+    }
+    assert str(drop.commandType) == "dropTipInPlace"
+    assert drop.intent == "protocol"
+    assert drop.params == {
+        "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
+    }
+    assert len(result) == 2
