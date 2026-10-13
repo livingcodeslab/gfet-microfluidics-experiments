@@ -501,3 +501,24 @@ def trash_tip(
         enqueue_command(sender, run, move),
         enqueue_command(sender, run, drop),
     )
+
+
+def get_run(
+        sender: RequestSender, runtype: RunType, run_id: uuid.UUID
+) -> Run:
+    """Get a run by its id.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param runtype: The type of run to get.
+    :type runtype: gdnasynth.ot2r.commands.runs.RunType
+    :param run_id: The id of the run to get.
+    :type run_id: uuid.UUID
+
+    :rtype gdnasynth.ot2r.commands.runs.Run
+    """
+    resp = sender(
+        endpoint=f"{run_endpoint(runtype)}/{run_id}",
+        method="GET",
+        data={})
+    return parse_run_result(resp.json()["data"], runtype)
