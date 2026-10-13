@@ -7,6 +7,7 @@ import requests
 
 from gdnasynth.ot2r.types import HTTPRequestMethod
 from gdnasynth.ot2r.commands.types import OpentronsVersion
+from gdnasynth.ot2r.serialization import to_jsonable
 
 
 class RequestSender(Protocol):
@@ -79,7 +80,7 @@ def send_request(
             url=urljoin(robot_address, endpoint),
             **{
                 **kwargs,
-                ("params" if _method == "get" else "json"): data,
+                ("params" if _method == "get" else "json"): to_jsonable(data),
                 "timeout": kwargs.get("timeout", (9.13, 20)),
                 "headers": {
                     **kwargs.get("headers", {}),

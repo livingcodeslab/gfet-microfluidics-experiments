@@ -187,19 +187,6 @@ def add_labware_definition(
     return DefinitionUri(resp.json()["data"]["definitionUri"])
 
 
-def _command_payload(command: Command) -> dict:
-    """Build the JSON payload for a command, omitting unset optionals."""
-    payload = {
-        "commandType": str(command.commandType),
-        "params": command.params,
-    }
-    if command.intent is not None:
-        payload["intent"] = command.intent
-    if command.key is not None:
-        payload["key"] = str(command.key)
-    return payload
-
-
 def enqueue_command(
         run: Run, command: Command, sender: RequestSender
 ) -> dict:
@@ -217,7 +204,7 @@ def enqueue_command(
     resp = sender(
         endpoint=f"{run_endpoint(run.runType)}/{run.id}/commands",
         method="POST",
-        data={"data": _command_payload(command)})
+        data={"data": command})
     return resp.json()["data"]
 
 
