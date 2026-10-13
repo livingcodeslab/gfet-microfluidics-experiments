@@ -449,3 +449,20 @@ def drop_tip(
         },
         intent="protocol")
     return enqueue_command(run, command, sender)
+
+
+def home(run: Run, sender: RequestSender) -> dict:
+    """Enqueue a ``home`` command for the run.
+
+    :param run: The run to home.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+
+    :rtype dict
+    """
+    command = Command(
+        commandType=NonEmptyString("home"),
+        params={},
+        intent="protocol")
+    return enqueue_command(run, command, sender)
