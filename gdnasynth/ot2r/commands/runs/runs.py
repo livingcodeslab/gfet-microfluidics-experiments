@@ -1,6 +1,7 @@
 """Commands concerning runs."""
 import json
 import uuid
+import logging
 import datetime
 from pathlib import Path
 from typing import Sequence, Union
@@ -21,6 +22,8 @@ from gdnasynth.ot2r.commands.types import (Command,
 from gdnasynth.ot2r.types import LabwareConfig, PipetteConfig
 
 from .types import Run, RunType, EngineStatus
+
+logger = logging.getLogger(__name__)
 
 ## Notes:
 # Difference between normal runs and  maintenance runs are:
@@ -161,6 +164,7 @@ def create_run(
         endpoint=run_endpoint(runtype),
         method="POST",
         data={"data": {"labwareOffsets": offsets}})
+    logger.debug("Response text (create_run): %s", resp.text)
     return parse_run_result(resp.json()["data"], runtype)
 
 
@@ -259,6 +263,7 @@ def enqueue_command(
         endpoint=f"{run_endpoint(run.runType)}/{run.id}/commands",
         method="POST",
         data={"data": command})
+    logger.debug("Response text (enqueue_command): %s", resp.text)
     return resp.json()["data"]
 
 

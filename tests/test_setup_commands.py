@@ -19,6 +19,7 @@ class _FakeResponse:
 
     def __init__(self, payload):
         self._payload = payload
+        self.text = ""
 
     def json(self):
         return self._payload
