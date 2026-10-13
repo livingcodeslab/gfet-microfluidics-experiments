@@ -466,3 +466,38 @@ def home(sender: RequestSender, run: Run) -> dict:
         params={},
         intent="protocol")
     return enqueue_command(sender, run, command)
+
+
+def trash_tip(
+        sender: RequestSender, run: Run, pipette: PipetteConfig
+) -> tuple[dict, dict]:
+    """Dispose of the pipette's tip in the OT-2's fixed trash.
+
+    Enqueues ``moveToAddressableAreaForDropTip`` followed by
+    ``dropTipInPlace``.  OT-2 only: robots with a movable trash area would
+    need a different implementation.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param run: The run to dispose of the tip in.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param pipette: The pipette whose tip to dispose of.
+    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+
+    :rtype tuple[dict, dict]
+    """
+    move = Command(
+        commandType=NonEmptyString("moveToAddressableAreaForDropTip"),
+        params={
+            "pipetteId": str(pipette.pipette_id),
+            "addressableAreaName": "fixedTrash",
+        },
+        intent="protocol")
+    drop = Command(
+        commandType=NonEmptyString("dropTipInPlace"),
+        params={"pipetteId": str(pipette.pipette_id)},
+        intent="protocol")
+    return (
+        enqueue_command(sender, run, move),
+        enqueue_command(sender, run, drop),
+    )
