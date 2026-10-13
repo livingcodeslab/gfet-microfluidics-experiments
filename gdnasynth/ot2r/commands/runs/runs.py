@@ -375,3 +375,44 @@ def aspirate(
         },
         intent="protocol")
     return enqueue_command(run, command, sender)
+
+
+def dispense(
+        run: Run,
+        pipette: PipetteConfig,
+        labware: LabwareConfig,
+        well_name: str,
+        volume: float,
+        flow_rate: float,
+        sender: RequestSender
+) -> dict:
+    """Enqueue a ``dispense`` command for the run.
+
+    :param run: The run to dispense in.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param pipette: The pipette to use.
+    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :param labware: The labware to dispense to.
+    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :param well_name: The well to dispense to.
+    :type well_name: str
+    :param volume: The volume to dispense, in µL.
+    :type volume: float
+    :param flow_rate: The flow rate to dispense at, in µL/s.
+    :type flow_rate: float
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+
+    :rtype dict
+    """
+    command = Command(
+        commandType=NonEmptyString("dispense"),
+        params={
+            "pipetteId": str(pipette.pipette_id),
+            "labwareId": str(labware.labware_id),
+            "wellName": well_name,
+            "volume": volume,
+            "flowRate": flow_rate,
+        },
+        intent="protocol")
+    return enqueue_command(run, command, sender)
