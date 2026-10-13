@@ -539,3 +539,19 @@ def get_current_run(sender: RequestSender, runtype: RunType) -> Run:
         method="GET",
         data={})
     return parse_run_result(resp.json()["data"], runtype)
+
+
+def delete_run(sender: RequestSender, run: Run) -> None:
+    """Delete a run.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param run: The run to delete.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+
+    :rtype None
+    """
+    sender(
+        endpoint=f"{run_endpoint(run.runType)}/{run.id}",
+        method="DELETE",
+        data={})
