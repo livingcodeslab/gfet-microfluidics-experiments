@@ -66,3 +66,19 @@ def test_get_run():
     assert calls[-1]["method"] == "GET"
     assert run.id == uuid.UUID(RUN_ID)
     assert run.status == EngineStatus.IDLE
+
+
+def test_get_current_run():
+    """Test that get_current_run fetches and parses the current run.
+
+    GIVEN: a run payload and a capturing sender
+    WHEN: get_current_run(...) is called
+    THEN: the current run is GET from its endpoint and parsed
+    """
+    sender, calls = _capture({"data": RUN_PAYLOAD})
+
+    run = runs.get_current_run(sender, RunType.MAINTENANCERUN)
+
+    assert calls[-1]["endpoint"] == "/maintenance_runs/current_run"
+    assert calls[-1]["method"] == "GET"
+    assert run.id == uuid.UUID(RUN_ID)
