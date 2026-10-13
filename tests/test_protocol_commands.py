@@ -71,3 +71,30 @@ def test_pick_up_tip():
         "labwareId": "32dbb5b7-710d-428b-bff0-03e31351e25f",
         "wellName": "A1",
     }
+
+
+def test_aspirate():
+    """Test that aspirate enqueues an aspirate command.
+
+    GIVEN: a pipette, a reservoir and a capturing sender
+    WHEN: aspirate(...) is called
+    THEN: an aspirate command is enqueued with a protocol intent
+    """
+    sender, calls = _capture()
+    reservoir = LabwareConfig(
+        labware_name="nest_12_reservoir_15ml",
+        load_slot=3,
+        labware_id=uuid.UUID("fe305793-e2b6-40ce-94d7-2b55549b1b57"))
+
+    runs.aspirate(_run(), _pipette(), reservoir, "A1", 10.0, 7.56, sender)
+
+    command = calls[-1]["data"]["data"]
+    assert str(command.commandType) == "aspirate"
+    assert command.intent == "protocol"
+    assert command.params == {
+        "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
+        "labwareId": "fe305793-e2b6-40ce-94d7-2b55549b1b57",
+        "wellName": "A1",
+        "volume": 10.0,
+        "flowRate": 7.56,
+    }
