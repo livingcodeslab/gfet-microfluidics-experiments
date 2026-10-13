@@ -97,3 +97,22 @@ def test_delete_run():
 
     assert calls[-1]["endpoint"] == f"/maintenance_runs/{RUN_ID}"
     assert calls[-1]["method"] == "DELETE"
+
+
+def test_list_commands():
+    """Test that list_commands fetches a run's commands.
+
+    GIVEN: a commands payload and a capturing sender
+    WHEN: list_commands(...) is called
+    THEN: the commands are GET from the run's commands endpoint
+    """
+    commands = [
+        {"id": "cmd-1", "commandType": "loadLabware", "status": "succeeded"},
+    ]
+    sender, calls = _capture({"data": commands})
+
+    result = runs.list_commands(sender, _run())
+
+    assert calls[-1]["endpoint"] == f"/maintenance_runs/{RUN_ID}/commands"
+    assert calls[-1]["method"] == "GET"
+    assert result == commands
