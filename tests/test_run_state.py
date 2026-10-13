@@ -82,3 +82,18 @@ def test_get_current_run():
     assert calls[-1]["endpoint"] == "/maintenance_runs/current_run"
     assert calls[-1]["method"] == "GET"
     assert run.id == uuid.UUID(RUN_ID)
+
+
+def test_delete_run():
+    """Test that delete_run deletes a run.
+
+    GIVEN: a run and a capturing sender
+    WHEN: delete_run(...) is called
+    THEN: the run is DELETEd from its endpoint
+    """
+    sender, calls = _capture({})
+
+    runs.delete_run(sender, _run())
+
+    assert calls[-1]["endpoint"] == f"/maintenance_runs/{RUN_ID}"
+    assert calls[-1]["method"] == "DELETE"
