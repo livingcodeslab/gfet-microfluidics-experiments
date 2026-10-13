@@ -116,3 +116,28 @@ def test_list_commands():
     assert calls[-1]["endpoint"] == f"/maintenance_runs/{RUN_ID}/commands"
     assert calls[-1]["method"] == "GET"
     assert result == commands
+
+
+def test_get_command():
+    """Test that get_command fetches a single command by id.
+
+    GIVEN: a command payload and a capturing sender
+    WHEN: get_command(...) is called
+    THEN: the command is GET from its endpoint and returned raw
+    """
+    command = {
+        "id": "ccd9b2d0-064f-41d7-b0c7-d0df60bb1124",
+        "commandType": "loadLabware",
+        "status": "succeeded",
+    }
+    sender, calls = _capture({"data": command})
+
+    result = runs.get_command(
+        sender, _run(),
+        uuid.UUID("ccd9b2d0-064f-41d7-b0c7-d0df60bb1124"))
+
+    assert calls[-1]["endpoint"] == (
+        f"/maintenance_runs/{RUN_ID}/commands/"
+        "ccd9b2d0-064f-41d7-b0c7-d0df60bb1124")
+    assert calls[-1]["method"] == "GET"
+    assert result == command
