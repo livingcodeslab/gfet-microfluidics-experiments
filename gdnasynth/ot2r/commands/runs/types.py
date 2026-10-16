@@ -2,7 +2,7 @@
 import enum
 import uuid
 import datetime
-from typing import Any, Sequence
+from typing import Any, Optional, Sequence
 from dataclasses import field, dataclass
 
 from gdnasynth.ot2r.types import PipetteConfig
@@ -39,6 +39,9 @@ class Run:
     createdAt: datetime.datetime
     status: EngineStatus
     current: bool = False
+    protocolId: Optional[uuid.UUID] = None
+    startedAt: Optional[datetime.datetime] = None
+    completedAt: Optional[datetime.datetime] = None
     actions: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
     errors: Sequence[Any] = field(default_factory=tuple) #TODO: Identify type
     hasEverEnteredErrorRecovery: bool = False

@@ -133,6 +133,14 @@ def parse_labware(data: Sequence[dict]) -> Sequence[LoadedLabware]:
         for labware in data)
 
 
+def _parse_optional_datetime(
+        value: Optional[str]) -> Optional[datetime.datetime]:
+    """Parse an optional ISO-8601 timestamp."""
+    if value is None:
+        return None
+    return datetime.datetime.fromisoformat(value)
+
+
 def parse_run_result(result: dict, runtype: RunType) -> Run:
     """Parse the response json."""
     _run = {
@@ -141,6 +149,10 @@ def parse_run_result(result: dict, runtype: RunType) -> Run:
         "id": uuid.UUID(result["id"]),
         "createdAt": datetime.datetime.fromisoformat(result["createdAt"]),
         "status": parse_status(result["status"]),
+        "protocolId": (uuid.UUID(result["protocolId"])
+                       if result.get("protocolId") is not None else None),
+        "startedAt": _parse_optional_datetime(result.get("startedAt")),
+        "completedAt": _parse_optional_datetime(result.get("completedAt")),
         # "actions": parse_run_actions(result["actions"]),
         # "errors": parse_run_errors(result["errors"]),
         # "pipettes": parse_pipettes(result["pipettes"]),
@@ -151,9 +163,8 @@ def parse_run_result(result: dict, runtype: RunType) -> Run:
         "labwareOffsets": parse_labware_offsets(result["labwareOffsets"]),
         # **parse_extra_normal_run_fields(result)
     }
-    # The API returns fields we do not (yet) model (e.g. protocolId,
-    # startedAt, completedAt, cameraSettings); ignore those rather than
-    # failing to build the dataclass.
+    # The API returns fields we do not (yet) model (e.g. cameraSettings);
+    # ignore those rather than failing to build the dataclass.
     return Run(**{
         key: value for key, value in _run.items()
         if key in Run.__dataclass_fields__})
