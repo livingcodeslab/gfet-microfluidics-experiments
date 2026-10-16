@@ -631,3 +631,36 @@ def get_command(
         method="GET",
         data={})
     return resp.json()["data"]
+
+
+def load_liquid(
+        sender: RequestSender,
+        run: Run,
+        liquid_id: NonEmptyString,
+        labware: LabwareConfig,
+        volume_by_well: dict
+) -> dict:
+    """Enqueue a ``loadLiquid`` command for the run.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param run: The run to load the liquid into.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param liquid_id: The id of a liquid defined by the run's protocol.
+    :type liquid_id: gdnasynth.ot2r.commands.base_types.NonEmptyString
+    :param labware: The labware holding the liquid.
+    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :param volume_by_well: Volumes (µL) keyed by well name.
+    :type volume_by_well: dict
+
+    :rtype dict
+    """
+    command = Command(
+        commandType=NonEmptyString("loadLiquid"),
+        params={
+            "liquidId": str(liquid_id),
+            "labwareId": str(labware.labware_id),
+            "volumeByWell": volume_by_well,
+        },
+        intent="setup")
+    return enqueue_command(sender, run, command)
