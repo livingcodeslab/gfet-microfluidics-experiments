@@ -141,3 +141,39 @@ def test_get_command():
         "ccd9b2d0-064f-41d7-b0c7-d0df60bb1124")
     assert calls[-1]["method"] == "GET"
     assert result == command
+
+
+def test_create_run_with_protocol_id():
+    """Test that create_run forwards a protocolId when one is given.
+
+    GIVEN: a run payload and a capturing sender
+    WHEN: create_run(...) is called with a protocol_id
+    THEN: the normal run create body carries that protocolId
+    """
+    sender, calls = _capture({"data": RUN_PAYLOAD})
+
+    run = runs.create_run(
+        sender, RunType.NORMALRUN, (),
+        protocol_id=uuid.UUID("22222222-2222-2222-2222-222222222222"))
+
+    assert calls[-1]["endpoint"] == "/runs"
+    assert calls[-1]["method"] == "POST"
+    assert calls[-1]["data"] == {"data": {
+        "labwareOffsets": (),
+        "protocolId": "22222222-2222-2222-2222-222222222222",
+    }}
+    assert run.id == uuid.UUID(RUN_ID)
+
+
+def test_create_run_without_protocol_id():
+    """Test that create_run omits protocolId when none is given.
+
+    GIVEN: a run payload and a capturing sender
+    WHEN: create_run(...) is called without a protocol_id
+    THEN: the create body carries only the labware offsets
+    """
+    sender, calls = _capture({"data": RUN_PAYLOAD})
+
+    runs.create_run(sender, RunType.MAINTENANCERUN, ())
+
+    assert calls[-1]["data"] == {"data": {"labwareOffsets": ()}}
