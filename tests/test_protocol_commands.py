@@ -249,3 +249,45 @@ def test_dispense_with_well_location():
         "flowRate": 7.56,
         "wellLocation": {"origin": "bottom"},
     }
+
+
+def test_pick_up_tip_with_well_location():
+    """Test that pick_up_tip forwards a wellLocation when one is given.
+
+    GIVEN: a pipette, a tiprack, and a well location
+    WHEN: pick_up_tip(...) is called with well_location
+    THEN: the pickUpTip command carries that wellLocation
+    """
+    sender, calls = _capture()
+
+    runs.pick_up_tip(sender, _run(), _pipette(), _tiprack(), "A1",
+                     well_location={"origin": "bottom"})
+
+    command = calls[-1]["data"]["data"]
+    assert command.params == {
+        "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
+        "labwareId": "32dbb5b7-710d-428b-bff0-03e31351e25f",
+        "wellName": "A1",
+        "wellLocation": {"origin": "bottom"},
+    }
+
+
+def test_drop_tip_with_well_location():
+    """Test that drop_tip forwards a wellLocation when one is given.
+
+    GIVEN: a pipette, a tiprack, and a well location
+    WHEN: drop_tip(...) is called with well_location
+    THEN: the dropTip command carries that wellLocation
+    """
+    sender, calls = _capture()
+
+    runs.drop_tip(sender, _run(), _pipette(), _tiprack(), "A1",
+                  well_location={"origin": "top"})
+
+    command = calls[-1]["data"]["data"]
+    assert command.params == {
+        "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
+        "labwareId": "32dbb5b7-710d-428b-bff0-03e31351e25f",
+        "wellName": "A1",
+        "wellLocation": {"origin": "top"},
+    }
