@@ -213,3 +213,18 @@ def test_pause():
     assert calls[-1]["method"] == "POST"
     assert calls[-1]["data"] == {"data": {"actionType": "pause"}}
     assert result == {"id": "act-2", "actionType": "pause"}
+
+
+def test_parse_run_result_ignores_unknown_fields():
+    """Test that parse_run_result tolerates fields we do not model.
+
+    GIVEN: a run payload carrying an extra field (e.g. protocolId)
+    WHEN: parse_run_result(...) is called
+    THEN: the Run is built, ignoring the unknown field
+    """
+    payload = {**RUN_PAYLOAD,
+               "protocolId": "11111111-1111-1111-1111-111111111111"}
+
+    run = runs.parse_run_result(payload, RunType.NORMALRUN)
+
+    assert run.id == uuid.UUID(RUN_ID)
