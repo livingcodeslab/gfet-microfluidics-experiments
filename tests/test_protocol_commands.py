@@ -2,6 +2,7 @@
 import datetime
 import uuid
 
+from gdnasynth.ot2r.commands.base_types import NonEmptyString
 from gdnasynth.ot2r.commands.runs import runs
 from gdnasynth.ot2r.commands.runs.types import EngineStatus, Run, RunType
 from gdnasynth.ot2r.types import LabwareConfig, PipetteConfig
@@ -290,4 +291,30 @@ def test_drop_tip_with_well_location():
         "labwareId": "32dbb5b7-710d-428b-bff0-03e31351e25f",
         "wellName": "A1",
         "wellLocation": {"origin": "top"},
+    }
+
+
+def test_load_liquid():
+    """Test that load_liquid enqueues a loadLiquid command.
+
+    GIVEN: a liquid id, a reservoir, and per-well volumes
+    WHEN: load_liquid(...) is called
+    THEN: a loadLiquid command is enqueued with those volumes
+    """
+    sender, calls = _capture()
+    reservoir = LabwareConfig(
+        labware_name="nest_12_reservoir_15ml",
+        load_slot=3,
+        labware_id=uuid.UUID("fe305793-e2b6-40ce-94d7-2b55549b1b57"))
+
+    runs.load_liquid(sender, _run(), NonEmptyString("water-id"), reservoir,
+                     {"A1": 10000, "A3": 10000})
+
+    command = calls[-1]["data"]["data"]
+    assert str(command.commandType) == "loadLiquid"
+    assert command.intent == "setup"
+    assert command.params == {
+        "liquidId": "water-id",
+        "labwareId": "fe305793-e2b6-40ce-94d7-2b55549b1b57",
+        "volumeByWell": {"A1": 10000, "A3": 10000},
     }
