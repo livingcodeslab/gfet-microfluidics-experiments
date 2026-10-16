@@ -177,3 +177,39 @@ def test_create_run_without_protocol_id():
     runs.create_run(sender, RunType.MAINTENANCERUN, ())
 
     assert calls[-1]["data"] == {"data": {"labwareOffsets": ()}}
+
+
+def test_play():
+    """Test that play posts a play action for the run.
+
+    GIVEN: a run and a capturing sender
+    WHEN: play(...) is called
+    THEN: a 'play' action is POSTed to the run's actions endpoint
+    """
+    sender, calls = _capture(
+        {"data": {"id": "act-1", "actionType": "play"}})
+
+    result = runs.play(sender, _run())
+
+    assert calls[-1]["endpoint"] == f"/maintenance_runs/{RUN_ID}/actions"
+    assert calls[-1]["method"] == "POST"
+    assert calls[-1]["data"] == {"data": {"actionType": "play"}}
+    assert result == {"id": "act-1", "actionType": "play"}
+
+
+def test_pause():
+    """Test that pause posts a pause action for the run.
+
+    GIVEN: a run and a capturing sender
+    WHEN: pause(...) is called
+    THEN: a 'pause' action is POSTed to the run's actions endpoint
+    """
+    sender, calls = _capture(
+        {"data": {"id": "act-2", "actionType": "pause"}})
+
+    result = runs.pause(sender, _run())
+
+    assert calls[-1]["endpoint"] == f"/maintenance_runs/{RUN_ID}/actions"
+    assert calls[-1]["method"] == "POST"
+    assert calls[-1]["data"] == {"data": {"actionType": "pause"}}
+    assert result == {"id": "act-2", "actionType": "pause"}
