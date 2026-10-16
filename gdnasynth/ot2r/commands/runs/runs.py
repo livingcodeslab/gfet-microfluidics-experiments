@@ -693,3 +693,38 @@ def wait_for_resume(
         params=params,
         intent="protocol")
     return enqueue_command(sender, run, command)
+
+
+def _run_action(sender: RequestSender, run: Run, action_type: str) -> dict:
+    """POST a run control action and return the action data."""
+    resp = sender(
+        endpoint=f"{run_endpoint(run.runType)}/{run.id}/actions",
+        method="POST",
+        data={"data": {"actionType": action_type}})
+    return resp.json()["data"]
+
+
+def play(sender: RequestSender, run: Run) -> dict:
+    """Start the run, or resume it after it has been paused.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param run: The run to play.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+
+    :rtype dict
+    """
+    return _run_action(sender, run, "play")
+
+
+def pause(sender: RequestSender, run: Run) -> dict:
+    """Pause the run.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param run: The run to pause.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+
+    :rtype dict
+    """
+    return _run_action(sender, run, "pause")
