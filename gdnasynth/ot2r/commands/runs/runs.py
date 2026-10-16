@@ -308,7 +308,8 @@ def pick_up_tip(
         run: Run,
         pipette: PipetteConfig,
         labware: LabwareConfig,
-        well_name: str
+        well_name: str,
+        well_location: Optional[dict] = None
 ) -> dict:
     """Enqueue a ``pickUpTip`` command for the run.
 
@@ -320,18 +321,24 @@ def pick_up_tip(
     :type labware: gdnasynth.ot2r.types.LabwareConfig
     :param well_name: The well to pick the tip from.
     :type well_name: str
+    :param well_location: An optional well location, e.g.
+        ``{"origin": "bottom"}``.
+    :type well_location: dict, optional
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
 
     :rtype dict
     """
+    params: dict = {
+        "pipetteId": str(pipette.pipette_id),
+        "labwareId": str(labware.labware_id),
+        "wellName": well_name,
+    }
+    if well_location is not None:
+        params["wellLocation"] = well_location
     command = Command(
         commandType=NonEmptyString("pickUpTip"),
-        params={
-            "pipetteId": str(pipette.pipette_id),
-            "labwareId": str(labware.labware_id),
-            "wellName": well_name,
-        },
+        params=params,
         intent="protocol")
     return enqueue_command(sender, run, command)
 
@@ -437,7 +444,8 @@ def drop_tip(
         run: Run,
         pipette: PipetteConfig,
         labware: LabwareConfig,
-        well_name: str
+        well_name: str,
+        well_location: Optional[dict] = None
 ) -> dict:
     """Enqueue a ``dropTip`` command for the run.
 
@@ -449,18 +457,24 @@ def drop_tip(
     :type labware: gdnasynth.ot2r.types.LabwareConfig
     :param well_name: The well to drop the tip into.
     :type well_name: str
+    :param well_location: An optional well location, e.g.
+        ``{"origin": "top"}``.
+    :type well_location: dict, optional
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
 
     :rtype dict
     """
+    params: dict = {
+        "pipetteId": str(pipette.pipette_id),
+        "labwareId": str(labware.labware_id),
+        "wellName": well_name,
+    }
+    if well_location is not None:
+        params["wellLocation"] = well_location
     command = Command(
         commandType=NonEmptyString("dropTip"),
-        params={
-            "pipetteId": str(pipette.pipette_id),
-            "labwareId": str(labware.labware_id),
-            "wellName": well_name,
-        },
+        params=params,
         intent="protocol")
     return enqueue_command(sender, run, command)
 
