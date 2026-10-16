@@ -218,13 +218,49 @@ def test_pause():
 def test_parse_run_result_ignores_unknown_fields():
     """Test that parse_run_result tolerates fields we do not model.
 
-    GIVEN: a run payload carrying an extra field (e.g. protocolId)
+    GIVEN: a run payload carrying an extra field (e.g. cameraSettings)
     WHEN: parse_run_result(...) is called
     THEN: the Run is built, ignoring the unknown field
     """
-    payload = {**RUN_PAYLOAD,
-               "protocolId": "11111111-1111-1111-1111-111111111111"}
+    payload = {**RUN_PAYLOAD, "cameraSettings": {"something": True}}
 
     run = runs.parse_run_result(payload, RunType.NORMALRUN)
 
     assert run.id == uuid.UUID(RUN_ID)
+
+
+def test_parse_run_result_parses_protocol_and_timestamps():
+    """Test that parse_run_result parses protocolId/timestamps.
+
+    GIVEN: a run payload with a protocolId and timestamps
+    WHEN: parse_run_result(...) is called
+    THEN: those fields are parsed onto the Run
+    """
+    payload = {
+        **RUN_PAYLOAD,
+        "protocolId": "11111111-1111-1111-1111-111111111111",
+        "startedAt": "2026-09-15T15:15:00.000000Z",
+        "completedAt": "2026-09-15T15:16:00.000000Z",
+    }
+
+    run = runs.parse_run_result(payload, RunType.NORMALRUN)
+
+    assert run.protocolId == uuid.UUID("11111111-1111-1111-1111-111111111111")
+    assert run.startedAt == datetime.datetime(
+        2026, 9, 15, 15, 15, tzinfo=datetime.timezone.utc)
+    assert run.completedAt == datetime.datetime(
+        2026, 9, 15, 15, 16, tzinfo=datetime.timezone.utc)
+
+
+def test_parse_run_result_defaults_protocol_and_timestamps_to_none():
+    """Test that absent protocolId/timestamps default to None.
+
+    GIVEN: a run payload without a protocolId or timestamps
+    WHEN: parse_run_result(...) is called
+    THEN: those Run fields are None
+    """
+    run = runs.parse_run_result(dict(RUN_PAYLOAD), RunType.MAINTENANCERUN)
+
+    assert run.protocolId is None
+    assert run.startedAt is None
+    assert run.completedAt is None
