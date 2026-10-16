@@ -318,3 +318,35 @@ def test_load_liquid():
         "labwareId": "fe305793-e2b6-40ce-94d7-2b55549b1b57",
         "volumeByWell": {"A1": 10000, "A3": 10000},
     }
+
+
+def test_wait_for_resume():
+    """Test that wait_for_resume enqueues a waitForResume command.
+
+    GIVEN: a capturing sender
+    WHEN: wait_for_resume(...) is called with a message
+    THEN: a waitForResume command is enqueued with that message
+    """
+    sender, calls = _capture()
+
+    runs.wait_for_resume(sender, _run(), message="SMU point")
+
+    command = calls[-1]["data"]["data"]
+    assert str(command.commandType) == "waitForResume"
+    assert command.intent == "protocol"
+    assert command.params == {"message": "SMU point"}
+
+
+def test_wait_for_resume_without_message():
+    """Test that wait_for_resume omits the message when none is given.
+
+    GIVEN: a capturing sender
+    WHEN: wait_for_resume(...) is called without a message
+    THEN: the waitForResume command carries no params
+    """
+    sender, calls = _capture()
+
+    runs.wait_for_resume(sender, _run())
+
+    command = calls[-1]["data"]["data"]
+    assert command.params == {}
