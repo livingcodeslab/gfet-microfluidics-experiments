@@ -157,3 +157,30 @@ def test_send_request_returns_response_on_success(monkeypatch):
                                  "POST", "*", {})
 
     assert response.status_code == 201
+
+
+def test_send_request_sends_files_as_multipart(monkeypatch):
+    """Test that a `files` payload is sent as multipart form data.
+
+    GIVEN: a request carrying files (and form fields)
+    WHEN: send_request(...) is called
+    THEN: requests receives the files and form fields, with no JSON body
+    """
+    recorded = {}
+
+    def fake_post(url, **kwargs):
+        recorded["url"] = url
+        recorded["kwargs"] = kwargs
+        return _FakeResponse(payload={"data": {}})
+
+    monkeypatch.setattr(http.requests, "post", fake_post)
+
+    files = [("files", ("protocol.json", b"{}", "application/json"))]
+    http.send_request("http://robot:31950", "/protocols", "POST", "*",
+                      {"protocol_kind": "standard"}, files=files)
+
+    assert recorded["url"] == "http://robot:31950/protocols"
+    assert recorded["kwargs"]["files"] == files
+    assert recorded["kwargs"]["data"] == {"protocol_kind": "standard"}
+    assert "json" not in recorded["kwargs"]
+    assert "Content-Type" not in recorded["kwargs"]["headers"]
