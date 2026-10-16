@@ -135,7 +135,7 @@ def parse_labware(data: Sequence[dict]) -> Sequence[LoadedLabware]:
 
 def parse_run_result(result: dict, runtype: RunType) -> Run:
     """Parse the response json."""
-    return Run(**{
+    _run = {
         "runType": runtype,
         **result,
         "id": uuid.UUID(result["id"]),
@@ -150,7 +150,13 @@ def parse_run_result(result: dict, runtype: RunType) -> Run:
         # "liquidClasses": parse_liquid_classes([result["liquidClasses"]]),
         "labwareOffsets": parse_labware_offsets(result["labwareOffsets"]),
         # **parse_extra_normal_run_fields(result)
-    })
+    }
+    # The API returns fields we do not (yet) model (e.g. protocolId,
+    # startedAt, completedAt, cameraSettings); ignore those rather than
+    # failing to build the dataclass.
+    return Run(**{
+        key: value for key, value in _run.items()
+        if key in Run.__dataclass_fields__})
 
 
 def run_endpoint(runtype: RunType) -> str:
