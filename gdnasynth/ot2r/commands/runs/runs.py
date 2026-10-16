@@ -664,3 +664,32 @@ def load_liquid(
         },
         intent="setup")
     return enqueue_command(sender, run, command)
+
+
+def wait_for_resume(
+        sender: RequestSender,
+        run: Run,
+        message: Optional[str] = None
+) -> dict:
+    """Enqueue a ``waitForResume`` command for the run.
+
+    Pauses the run until it is resumed with a ``play`` action, giving the
+    orchestrator a point at which to, for example, take SMU readings.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param run: The run to pause.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param message: An optional user-facing message for the pause.
+    :type message: str, optional
+
+    :rtype dict
+    """
+    params: dict = {}
+    if message is not None:
+        params["message"] = message
+    command = Command(
+        commandType=NonEmptyString("waitForResume"),
+        params=params,
+        intent="protocol")
+    return enqueue_command(sender, run, command)
