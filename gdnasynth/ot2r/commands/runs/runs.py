@@ -106,6 +106,18 @@ def parse_labware_offsets(data: Sequence[dict]) -> LabwareOffsets:
     return tuple(parse_labware_offset(offset) for offset in data)
 
 
+def parse_labware_id(value: str) -> Union[uuid.UUID, NonEmptyString]:
+    """Parse a labware id.
+
+    Most labware ids are UUIDs, but some (e.g. the fixed trash) are names,
+    so fall back to a ``NonEmptyString`` (which rejects an empty id).
+    """
+    try:
+        return uuid.UUID(value)
+    except ValueError:
+        return NonEmptyString(value)
+
+
 def parse_labware(data: Sequence[dict]) -> Sequence[LoadedLabware]:
     """Parse the ``labware`` list from a run response.
 
@@ -114,7 +126,7 @@ def parse_labware(data: Sequence[dict]) -> Sequence[LoadedLabware]:
     """
     return tuple(
         LoadedLabware(
-            id=uuid.UUID(labware["id"]),
+            id=parse_labware_id(labware["id"]),
             loadName=NonEmptyString(labware["loadName"]),
             definitionUri=DefinitionUri(labware["definitionUri"]),
             location=labware["location"])

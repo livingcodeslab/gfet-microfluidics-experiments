@@ -113,7 +113,7 @@ LabwareOffsets = Sequence[Union[LegacyLabwareOffset, LabwareOffset]]
 @dataclass(frozen=True)
 class LoadedLabware:
     """Labware object."""
-    id: uuid.UUID
+    id: Union[uuid.UUID, NonEmptyString]
     loadName: NonEmptyString
     definitionUri: DefinitionUri
     location: dict # Locations on Opentrons devices are complex (incomplete).
