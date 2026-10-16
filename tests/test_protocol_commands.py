@@ -194,3 +194,58 @@ def test_trash_tip():
         "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
     }
     assert len(result) == 2
+
+
+def test_aspirate_with_well_location():
+    """Test that aspirate forwards a wellLocation when one is given.
+
+    GIVEN: a pipette, a reservoir, and a well location
+    WHEN: aspirate(...) is called with well_location
+    THEN: the aspirate command carries that wellLocation
+    """
+    sender, calls = _capture()
+    reservoir = LabwareConfig(
+        labware_name="nest_12_reservoir_15ml",
+        load_slot=3,
+        labware_id=uuid.UUID("fe305793-e2b6-40ce-94d7-2b55549b1b57"))
+
+    runs.aspirate(sender, _run(), _pipette(), reservoir, "A1", 10.0, 7.56,
+                  well_location={"origin": "center"})
+
+    command = calls[-1]["data"]["data"]
+    assert command.params == {
+        "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
+        "labwareId": "fe305793-e2b6-40ce-94d7-2b55549b1b57",
+        "wellName": "A1",
+        "volume": 10.0,
+        "flowRate": 7.56,
+        "wellLocation": {"origin": "center"},
+    }
+
+
+def test_dispense_with_well_location():
+    """Test that dispense forwards a wellLocation when one is given.
+
+    GIVEN: a pipette, a chip, and a well location
+    WHEN: dispense(...) is called with well_location
+    THEN: the dispense command carries that wellLocation
+    """
+    sender, calls = _capture()
+    chip = LabwareConfig(
+        labware_name="livingcodeslab_graphenea_card_adapter",
+        load_slot=1,
+        labware_id=uuid.UUID("c9c762e1-8205-4ccd-be32-6535fd0e9514"),
+        namespace="livingcodeslab")
+
+    runs.dispense(sender, _run(), _pipette(), chip, "A1", 10.0, 7.56,
+                  well_location={"origin": "bottom"})
+
+    command = calls[-1]["data"]["data"]
+    assert command.params == {
+        "pipetteId": "7806a233-8012-4d99-8887-970935f103e1",
+        "labwareId": "c9c762e1-8205-4ccd-be32-6535fd0e9514",
+        "wellName": "A1",
+        "volume": 10.0,
+        "flowRate": 7.56,
+        "wellLocation": {"origin": "bottom"},
+    }
