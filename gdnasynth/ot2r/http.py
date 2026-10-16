@@ -118,7 +118,9 @@ def send_request(
     :type method: gdnasynth.ot2r.types.HTTPRequestMethod
     :param opentrons_version: The Opentrons API version to use.
     :type opentrons_version: gdnasynth.ot2r.commands.types.OpentronsVersion
-    :param data: The data to send with the HTTP request
+    :param data: The data to send with the HTTP request.  For a multipart
+        upload, this holds the form fields and the files are passed via the
+        ``files`` keyword argument.
     :type data: dict
 
     :rtype requests.Response
@@ -136,20 +138,22 @@ def send_request(
             f"({_method.upper()}) to the OT-2R robot.") from _aerr
 
     request_method = getattr(requests, _method)
+    files = kwargs.pop("files", None)
+    headers = {
+        **kwargs.pop("headers", {}),
+        "Accept": "application/json",
+        "opentrons-version": f"{opentrons_version}",
+    }
+    timeout = kwargs.pop("timeout", (9.13, 20))
+    if files is None:
+        headers["Content-Type"] = "application/json"
+        body = {("params" if _method == "get" else "json"): to_jsonable(data)}
+    else:
+        body = {"data": data, "files": files}
     try:
         response = request_method(
             url=urljoin(robot_address, endpoint),
-            **{
-                **kwargs,
-                ("params" if _method == "get" else "json"): to_jsonable(data),
-                "timeout": kwargs.get("timeout", (9.13, 20)),
-                "headers": {
-                    **kwargs.get("headers", {}),
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                    "opentrons-version": f"{opentrons_version}"
-                }
-            })
+            headers=headers, timeout=timeout, **body, **kwargs)
     except requests.exceptions.RequestException as _reqerr:
         raise RobotUnreachable(
             f"Could not reach the OT-2R robot at {robot_address}."
