@@ -4,7 +4,7 @@ import uuid
 import logging
 import datetime
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Optional, Sequence, Union
 
 from gdnasynth.ot2r.http import RequestSender
 from gdnasynth.ot2r.commands.base_types import NonEmptyString
@@ -343,7 +343,8 @@ def aspirate(
         labware: LabwareConfig,
         well_name: str,
         volume: float,
-        flow_rate: float
+        flow_rate: float,
+        well_location: Optional[dict] = None
 ) -> dict:
     """Enqueue an ``aspirate`` command for the run.
 
@@ -359,20 +360,26 @@ def aspirate(
     :type volume: float
     :param flow_rate: The flow rate to aspirate at, in µL/s.
     :type flow_rate: float
+    :param well_location: An optional well location, e.g.
+        ``{"origin": "center"}``.
+    :type well_location: dict, optional
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
 
     :rtype dict
     """
+    params = {
+        "pipetteId": str(pipette.pipette_id),
+        "labwareId": str(labware.labware_id),
+        "wellName": well_name,
+        "volume": volume,
+        "flowRate": flow_rate,
+    }
+    if well_location is not None:
+        params["wellLocation"] = well_location
     command = Command(
         commandType=NonEmptyString("aspirate"),
-        params={
-            "pipetteId": str(pipette.pipette_id),
-            "labwareId": str(labware.labware_id),
-            "wellName": well_name,
-            "volume": volume,
-            "flowRate": flow_rate,
-        },
+        params=params,
         intent="protocol")
     return enqueue_command(sender, run, command)
 
@@ -384,7 +391,8 @@ def dispense(
         labware: LabwareConfig,
         well_name: str,
         volume: float,
-        flow_rate: float
+        flow_rate: float,
+        well_location: Optional[dict] = None
 ) -> dict:
     """Enqueue a ``dispense`` command for the run.
 
@@ -400,20 +408,26 @@ def dispense(
     :type volume: float
     :param flow_rate: The flow rate to dispense at, in µL/s.
     :type flow_rate: float
+    :param well_location: An optional well location, e.g.
+        ``{"origin": "center"}``.
+    :type well_location: dict, optional
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
 
     :rtype dict
     """
+    params = {
+        "pipetteId": str(pipette.pipette_id),
+        "labwareId": str(labware.labware_id),
+        "wellName": well_name,
+        "volume": volume,
+        "flowRate": flow_rate,
+    }
+    if well_location is not None:
+        params["wellLocation"] = well_location
     command = Command(
         commandType=NonEmptyString("dispense"),
-        params={
-            "pipetteId": str(pipette.pipette_id),
-            "labwareId": str(labware.labware_id),
-            "wellName": well_name,
-            "volume": volume,
-            "flowRate": flow_rate,
-        },
+        params=params,
         intent="protocol")
     return enqueue_command(sender, run, command)
 
