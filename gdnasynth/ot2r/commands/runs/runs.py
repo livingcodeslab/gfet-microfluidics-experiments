@@ -147,7 +147,10 @@ def run_endpoint(runtype: RunType) -> str:
 
 
 def create_run(
-        sender: RequestSender, runtype: RunType, offsets: LabwareOffsets
+        sender: RequestSender,
+        runtype: RunType,
+        offsets: LabwareOffsets,
+        protocol_id: Optional[uuid.UUID] = None
 ) -> Run:
     """Create a run on the robot.
 
@@ -155,15 +158,21 @@ def create_run(
     :type runtype: gdnasynth.ot2r.commands.runs.RunType
     :param offsets: The initial labware offsets for the run.
     :type offsets: gdnasynth.ot2r.commands.types.LabwareOffsets
+    :param protocol_id: An optional protocol to associate with the run
+        (normal runs only).
+    :type protocol_id: uuid.UUID, optional
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
 
     :rtype gdnasynth.ot2r.commands.runs.Run
     """
+    data: dict = {"labwareOffsets": offsets}
+    if protocol_id is not None:
+        data["protocolId"] = str(protocol_id)
     resp = sender(
         endpoint=run_endpoint(runtype),
         method="POST",
-        data={"data": {"labwareOffsets": offsets}})
+        data={"data": data})
     logger.debug("Response text (create_run): %s", resp.text)
     return parse_run_result(resp.json()["data"], runtype)
 
