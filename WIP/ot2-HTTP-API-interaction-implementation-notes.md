@@ -126,7 +126,10 @@ Test suite: 71 tests passing, `mypy` clean at HEAD `cd46e8e` (2026-10-19).
 - **The engine inserts a `home` command on normal-run start** (hardware
   preparation), independent of the queued commands.
 - **Enqueued commands are filled in by the server**: default `wellLocation`
-  (`origin`, `offset`), `intent`, `commandAnnotationIds`, etc.
+  (`origin`, `offset`), `commandAnnotationIds`, etc. Notably **`intent`
+  defaults to `setup`** — and setup-intent commands execute *before* `play` on
+  a normal run, so motion commands must set `intent: "protocol"` explicitly.
+  The server also assigns `key` = the command's `id`.
 - **Bad ids may not fail until execution**; state checks matter.
 - **Enqueue-while-paused is accepted** (201, `queued`) on a normal run paused at
   a `waitForResume`.
@@ -152,5 +155,44 @@ Test suite: 71 tests passing, `mypy` clean at HEAD `cd46e8e` (2026-10-19).
   wraps `parse_liquid_classes([...])` in a list unnecessarily.
 - **`None` ⇒ key-omitted** is asserted by serialization but not yet verified
   against the API.
-- **`waitUntilComplete`** query parameter on `POST .../commands` not yet
-  supported/verified (see design notes §6 and tasks).
+- **`waitUntilComplete`** query parameter on `POST .../commands` — supported;
+  probed on the robot 2026-10-23, see §6.
+
+## 6. Enqueue synchronisation: `waitUntilComplete` (probed 2026-10-23)
+
+`POST /runs/{runId}/commands` and `POST /maintenance_runs/{runId}/commands`
+both accept these query parameters:
+
+- `waitUntilComplete` (boolean, default `false`) — `false` returns immediately
+  with the new command still `queued`; `true` returns only once the command
+  **succeeds or fails** (or the timeout is reached).
+- `timeout` (integer milliseconds) — the cap for `waitUntilComplete`. **Defaults
+  to infinite** (30 s on robot software <= 6.2.0); its timer starts **at
+  enqueue**, not at execution.
+- (normal runs only) `failedCommandId` — "FIXIT command use only".
+
+Verified on a maintenance run (`comment` / `loadLabware`):
+
+| Request | Returned status | Elapsed |
+| --- | --- | --- |
+| `comment`, `waitUntilComplete=true` | `succeeded` | 0.07 s |
+| `comment`, `waitUntilComplete=false` | `queued` | 0.07 s |
+| `comment`, no parameter | `queued` | 0.06 s |
+| `loadLabware`, `waitUntilComplete=true` | `succeeded` | 0.14 s |
+
+Hazards:
+
+- **Infinite default timeout.** `wait=true` on a command that cannot run yet
+  (e.g. a protocol-intent command on an unplayed normal run) **blocks the
+  request indefinitely**. Always pass an explicit `timeout`.
+- **Setup commands run before `play`.** A `comment` enqueued without `intent` on
+  an *unplayed* normal run returned `succeeded` immediately (the server
+  defaulted `intent: "setup"`). "Before `play`" does **not** mean "not
+  executed" for setup-intent commands.
+- **Stop/delete race.** `stop` → run enters `stop-requested`; an immediate
+  `DELETE` returns `409`. It becomes deletable a moment later.
+
+For orchestration: enqueue with `waitUntilComplete=false` to keep queueing
+fast, and use a bounded `waitUntilComplete`/`timeout` only where the caller must
+observe completion (e.g. a setup command whose result feeds the next decision).
+Do not rely on it to sequence protocol commands before `play`.
