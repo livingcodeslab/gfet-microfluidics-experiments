@@ -142,3 +142,107 @@ failure; the orchestrator decides what to show.
 - [ ] How much of the workflow (order + recovery policy) to encode as data vs
       code in the early scripts.
 - [ ] Whether `/robot/move`-based safe positioning is worth using before `play`.
+
+## 9. State model and step/command architecture (2026-10-23)
+
+> **Next session: re-read this section before starting implementation.**
+
+### 9.1 One `RobotState`, not per-concern ledgers
+
+```python
+@dataclass(frozen=True)
+class RobotState:
+    liquids: Liquids          # {labware_id: {well: volume_ul}} (+ capacity)
+    tips: Tips                # {rack_id: set of wells still holding a tip}
+    tip_on_pipette: bool
+```
+
+- **Multiple** liquids and **multiple** tipracks are tracked at once, keyed by
+  labware id; each well also carries its capacity (for the overflow guard).
+- `tip_on_pipette` is a **boolean**; we do not track where the tip came from.
+- Putting a tip back resolves to **the first empty well of a compatible rack**
+  (compatibility = the racks configured for that pipette); error if none.
+
+Guards:
+
+- `aspirate`: requires `tip_on_pipette`, `volume > 0`, and
+  `available >= volume` (with a tolerance for dead volume).
+- `dispense`: requires `tip_on_pipette`, and `target + volume <= capacity` when
+  the capacity is known.
+
+### 9.2 The state is a projection of the queued future
+
+A normal run executes queued commands in FIFO order, so folding the state over
+the enqueue order is exact. Divergence only arises on failure/abort (§9.4).
+
+### 9.3 `resolve(step, state) -> (commands, new_state)`
+
+A command's parameters can depend on state ("pick a tip" only knows *which
+well* once the racks are inspected), so a step cannot precompute its commands.
+Collapse `apply` + `commands` into one pure function, implemented as a
+`singledispatch` free function (no methods on the dataclasses):
+
+```python
+def resolve(step, state) -> tuple[list[Command], RobotState]: ...
+```
+
+- Commands and the new state come from the same snapshot, so they cannot
+  diverge.
+- Dry-run = fold `resolve` and discard the commands; execute = fold `resolve`
+  and enqueue the commands.
+
+Step vs Command:
+
+| | `Command` | `Step` |
+| --- | --- | --- |
+| Nature | wire payload | planning unit |
+| Fields | `commandType`, `params`, `intent`, `key` | `name` + data, resolved by `resolve` |
+| Knows state | no | yes (guards + state-dependent targets) |
+| Emits | — | 1..n commands |
+| Failure granularity | one instruction | the atomic unit you choose |
+
+- A step emits >= 1 commands: `waitForResume` -> 1, `trash_tip` -> 2
+  (`moveToAddressableAreaForDropTip` + `dropTipInPlace`).
+- `transfer` can be **one composite step** (atomic) or **a list of steps**
+  (partial progress). How steps are grouped is how failure granularity is
+  chosen.
+
+### 9.4 Journal and reconstruction after failure
+
+`execute` returns `(state, journal)`; each journal entry records
+`(seq, step, [(command, returned_id)], state_before, state_after)`.
+
+- Projected state = `state_after` of the last step.
+- Actual state after failure = `state_before` of the first step whose commands
+  are not all `succeeded`; mark that step's touched wells/tips **untrusted**
+  rather than guessing.
+- Compare actual vs projected and report the divergence.
+- Persisting `initial_state` + the journal enables later reconstruction and
+  resume.
+
+### 9.5 Consequences for `ot2r`
+
+- Refactor the sender-coupled helpers (`aspirate(sender, run, ...)`, ...) into
+  **pure builders** `*_command(...) -> Command`, keeping `enqueue_command` as
+  the only sender-touching function. The old wrappers become
+  `enqueue_command(sender, run, aspirate_command(...))` and are dropped once
+  callers migrate. This keeps one source of truth for payload shapes and lets
+  `resolve` stay pure.
+- **`intent` must be explicit** (`"protocol"` for motion commands): the server
+  defaults it to `"setup"`, and setup commands execute before `play`.
+- Correlate commands by the returned `id`; the server assigns `key` = `id`.
+
+### 9.6 Proposed first slice
+
+`gdnasynth/orchestration/`: `state.py` (`RobotState`, `Liquids`, `Tips`),
+`liquids.py`, `tips.py`, `steps.py` (step dataclasses + `resolve`
+registrations), `execute.py`. Pure-logic tests only: fold a transfer, assert
+volumes/tips, assert guards raise, assert `resolve` builds the expected
+`Command`s, and assert `execute` with a stub sender applies exactly what it
+enqueues.
+
+### 9.7 Open decisions (deferred to next session)
+
+- [ ] Settle `resolve` vs separate `apply` + `commands` (recommendation:
+      `resolve`).
+- [ ] Start the first test patch for `state.py` / `liquids.py`.
