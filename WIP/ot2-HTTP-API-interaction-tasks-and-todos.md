@@ -80,6 +80,10 @@ Progress and backlog for the low-level `gdnasynth.ot2r` client. Design in
 - [ ] Split `Configuration` into connection vs deck concerns; connection object
       produces the sender.
 - [ ] Decide whether `__slots__ = ()` should be added to the string subclasses.
+- [ ] Reconsider the `ot2r` package nesting (`ot2r/commands/runs/runs.py`).
+      Idea: flatten into `gdnasynth.ot2r`, split by domain (liquids, labware,
+      modules, tips, runs, ...) with a types module and a code module per
+      domain. Revisit once state/steps are settled.
 
 ## Future / direction only
 

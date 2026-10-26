@@ -41,6 +41,9 @@ patch). Start with pure logic that needs no robot.
 
 - [ ] Read each tiprack's real initial state instead of assuming full racks
       (only after the workflow is proven).
+- [ ] `pick_next_tip(...)` convenience: resolve the next available tip from a
+      named rack (**low priority**). Must handle partially used racks picked
+      haphazardly, given a way to enumerate which wells actually hold tips.
 - [ ] Robot-side liquid tracking (`loadLiquid`) — blocked by the protocol↔
       enqueue short-circuit; only revisit if the ≥1-command protocol probe
       succeeds.

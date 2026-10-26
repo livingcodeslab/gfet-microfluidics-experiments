@@ -204,3 +204,11 @@ Tracked as tasks in `ot2-HTTP-API-interaction-tasks-and-todos.md`:
 command-id vs resource-id result shape, `Configuration` split, `__slots__`,
 `None`-omission verification, `HardwareNotYetInitialized` policy, and the
 `waitUntilComplete` enqueue parameter.
+
+## 8. Package layout — flattening `ot2r` (idea, revisit later)
+
+`gdnasynth.ot2r.commands.runs.runs` nests awkwardly. Possible direction: flatten
+into the `gdnasynth.ot2r` package and split **by domain** (liquids, labware,
+modules, tips, runs, ...), with a *types* module and a *code* module per domain,
+instead of a proliferation of nested packages. Deferred until we understand how
+the pieces (especially state/steps) fit together. Tracked in the tasks file.

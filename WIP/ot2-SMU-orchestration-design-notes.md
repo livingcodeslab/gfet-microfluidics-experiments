@@ -29,14 +29,16 @@ The guiding split (from the 2026-10-09 design, still current):
 - The OT-2-specific pieces (`send_request`, `RequestSender`, `Run`,
   `run_endpoint`, command functions) stay behind a **per-device boundary**; the
   orchestrator never imports them directly.
-- The common currency is **steps/commands that target a device**, not a shared
-  device base class. Because experiment order interleaves devices
-  (aspirate → dispense → acquire → dispose), the orchestrator sequences
-  device-bound steps it was handed.
+- The common currency is **operations in domain vocabulary** (e.g. "aspirate
+  reagent A", "take an SMU reading"), not device steps and not a shared device
+  base class. Device **steps** are internal to each device adapter. Because
+  experiment order interleaves devices (aspirate → dispense → acquire →
+  dispose), the orchestrator sequences operations it was handed and collects
+  their results. *(Revised 2026-10-26 — see §10.)*
 - Each device module exposes a small uniform interface — a `Protocol` is
-  enough: set up, execute a step, tear down. Transport details (HTTP for the
-  OT-2, VISA/SCPI for the SMU, serial for the microfluidics device) stay inside
-  the device module.
+  enough: `execute(operation)`, `flush()`, tear down. Transport details (HTTP
+  for the OT-2, VISA/SCPI for the SMU, serial for the microfluidics device) stay
+  inside the device module.
 
 ### User actions (UI layer)
 
@@ -52,8 +54,8 @@ The guiding split (from the 2026-10-09 design, still current):
   load pipette(s) → load labware → other setup;
 - run the experiment in the user-specified order.
 
-The orchestrator resolves everything (which device, which reagents, what order)
-and hands each lower layer only what it needs.
+The *workflow* resolves everything (which device, which reagents, what order)
+and hands the orchestrator only operations to sequence.
 
 ## 3. Run control choice
 
@@ -151,8 +153,14 @@ failure; the orchestrator decides what to show.
 
 ```python
 @dataclass(frozen=True)
+class Well:
+    volume_ul: float
+    capacity_ul: float        # mandatory; there is no "uncapped" well
+    # invariant: 0 <= volume_ul <= capacity_ul
+
+@dataclass(frozen=True)
 class RobotState:
-    liquids: Liquids          # {labware_id: {well: volume_ul}} (+ capacity)
+    liquids: Liquids          # {labware_id: {well: Well}}
     tips: Tips                # {rack_id: set of wells still holding a tip}
     tip_on_pipette: bool
 ```
@@ -162,6 +170,10 @@ class RobotState:
 - `tip_on_pipette` is a **boolean**; we do not track where the tip came from.
 - Putting a tip back resolves to **the first empty well of a compatible rack**
   (compatibility = the racks configured for that pipette); error if none.
+- `Tips` stores only the wells that still hold a tip. A **`pick_next_tip(...)`**
+  convenience (resolve the next available tip from a named rack) is a
+  **low-priority** item; it must cope with haphazardly used racks, assuming we
+  can enumerate which wells actually hold tips.
 
 Guards:
 
@@ -234,15 +246,123 @@ Step vs Command:
 
 ### 9.6 Proposed first slice
 
-`gdnasynth/orchestration/`: `state.py` (`RobotState`, `Liquids`, `Tips`),
-`liquids.py`, `tips.py`, `steps.py` (step dataclasses + `resolve`
-registrations), `execute.py`. Pure-logic tests only: fold a transfer, assert
+`gdnasynth/ot2r/`: `liquids.py` (`Well`, `Liquids`, `aspirate`, `dispense`,
+`volume`), `tips.py` (`Tips`, `take_tip`, `return_tip`, `first_available`),
+`state.py` (`RobotState`), then `steps.py` (step dataclasses + `resolve`
+registrations) and `execute.py`. Pure-logic tests only: fold a transfer, assert
 volumes/tips, assert guards raise, assert `resolve` builds the expected
 `Command`s, and assert `execute` with a stub sender applies exactly what it
-enqueues.
+enqueues. See §9.8 for why this is `ot2r` and not `orchestration`.
 
 ### 9.7 Open decisions (deferred to next session)
 
 - [ ] Settle `resolve` vs separate `apply` + `commands` (recommendation:
       `resolve`).
 - [ ] Start the first test patch for `state.py` / `liquids.py`.
+
+### 9.8 Where this code lives
+
+Liquids, tips, wells and tipracks are **OT-2R deck concepts**, so they live in
+the device module, not the device-agnostic orchestration layer:
+
+```
+gdnasynth/ot2r/
+    liquids.py    Well, Liquids, aspirate, dispense, volume
+    tips.py       Tips, take_tip, return_tip, first_available
+    state.py      RobotState (imports Liquids, Tips)
+    steps.py      step dataclasses + resolve         (later)
+    execute.py    execute(sender, run, state, steps) (later)
+
+gdnasynth/orchestration/   device-agnostic sequencer: SMU interleaving,
+                           persistence, pre-flight; knows nothing of wells
+```
+
+Rationale: `resolve(step, state) -> (list[Command], RobotState)` is then entirely
+local to `ot2r` (it returns `ot2r.Command` and `ot2r` state, no cross-layer
+types). Steps are **internal** to the OT-2R adapter; the orchestrator sees only
+operations (§10). The OT-2R-aware **workflow scripts** import `ot2r`, bind
+domain intent to concrete steps, and hand the orchestrator operations to
+sequence. This preserves the device boundary while keeping the step types with
+their device.
+
+## 10. Levels: operations vs steps, and the barrier model (2026-10-26)
+
+### 10.1 The correction
+
+§2 originally made **device steps** the orchestrator's currency. But an operation
+like "aspirate 10 µL of reagent A" and a step like
+`Aspirate(pipette, labware, well, volume, flow_rate)` are different vocabularies:
+
+- **domain intent** — experiment terms (reagents, wells, chips, readings);
+- **device realization** — plumbing terms (pipettes, labware ids, flow rates).
+
+The orchestrator must never see a `PipetteConfig` or a `flow_rate`.
+
+### 10.2 The levels
+
+| Level | Vocabulary | Owns | Currency |
+| --- | --- | --- | --- |
+| Workflow | reagents, chips, readings, conditions | experiment logic; may branch on results | operations |
+| Orchestrator | device-agnostic scheduling | ordering, barriers, retries, persistence | operations + results |
+| Device adapter (OT-2R) | pipettes, labware, wells, tips | config → device binding, device state, planning | steps (internal) |
+| Wire | `commandType` / `params` | transport | `Command` |
+
+**Operations are the orchestrator's currency; steps are internal to the device
+adapter.** The step / `resolve` / journal machinery (§9) is unchanged — it is
+simply private to `ot2r`.
+
+### 10.3 Queued operations vs barriers
+
+The OT-2R run model splits operations into two kinds:
+
+- **Queued operations** (motion: aspirate, dispense, pick tip) — staged into the
+  run and executed in FIFO order on `play`; they return nothing now and only
+  update the *projected* state.
+- **Barrier operations** (SMU reading, microfluidics pump/wash) — synchronous,
+  return data, and require the OT-2R queue to be drained first.
+
+So the orchestrator's unit is not a step but a **segment → barrier → segment**
+program:
+
+```
+stage motion operations ──flush (waitForResume)──► PAUSED
+                                                   ├─ run barrier ops (results!)
+                                                   └─ decide next segment (adaptive)
+resume ── play ──► ...
+```
+
+Consequences:
+
+- **Results are first-class.** `resolve → (commands, state)` has no data channel
+  because at the device level there is none; data appears at barriers and the
+  workflow branches on it.
+- **State is per device, never unified.** `RobotState` (liquids/tips) belongs to
+  OT-2R; the microfluidics device has its own (primed channels, waste); the SMU
+  has none. The orchestrator holds no device state.
+- A single domain operation may later decompose across devices (e.g. "deliver
+  reagent A to the chip" → OT-2R transfer + microfluidics prime). That is
+  workflow/planning work, above the orchestrator.
+
+### 10.4 The seam
+
+```python
+# orchestration/
+class Device(Protocol):
+    def execute(self, operation) -> OpResult | None: ...  # queues, or runs a barrier
+    def flush(self) -> None: ...                          # drain staged work to the wire
+```
+
+One adapter per device; each interprets only its own operation types. The OT-2R
+adapter's **public** surface is operations in domain terms (`aspirate(...)`,
+`dispense(...)`, `pick_tip(...)`, `flush(...)`), not steps; its internals are
+config binding (reagent → reservoir/well, pipette, flow rate, tip policy),
+`RobotState`, `steps`, `resolve`, `execute`.
+
+### 10.5 Staging (avoid premature abstraction)
+
+1. **Now:** `ot2r/liquids.py`, `tips.py`, `state.py` (true at any level), then
+   `steps.py` / `execute.py` as a *private device-level mechanism*.
+2. **When the first SMU-interleaved workflow exists:** introduce the
+   operation/barrier seam with exactly the two devices we actually have.
+3. Keep the vocabulary distinct — *operations/actions* vs *steps* — so we do not
+   drift back into conflating them.
