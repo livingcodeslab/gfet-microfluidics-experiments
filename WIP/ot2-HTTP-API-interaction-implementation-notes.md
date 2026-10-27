@@ -13,13 +13,12 @@ Times are UTC. Where a change was merged, the commit is noted.
 | File | Contents |
 | --- | --- |
 | `gdnasynth/ot2r/http.py` | `send_request(...)`; `RequestSender` protocol; `make_request_sender(...)`; `RobotUnreachable`, `RobotResponseError` |
-| `gdnasynth/ot2r/types.py` | `Configuration`, `LabwareConfig`, `PipetteConfig`, `HTTPRequestMethod`, `Mount` |
+| `gdnasynth/ot2r/types.py` | `Labware`, `Pipette`, `HTTPRequestMethod`, `Mount` |
 | `gdnasynth/ot2r/commands/base_types.py` | `NumericOpentronsVersion`, `NonEmptyString` |
 | `gdnasynth/ot2r/commands/types.py` | `OpentronsVersion`, `DefinitionUri`, `AddressableAreaName`, `LabwareOffset(s)`, `LocationSequence`, `DeckSlotName`, `ModuleModel`, `LoadedLabware`, `Command`, `RunError`, `APIError` |
 | `gdnasynth/ot2r/commands/runs/runs.py` | `RunType`, `EngineStatus`, `Run`, parsers (`parse_run_result`, `parse_labware`, `parse_labware_offsets`, …), `run_endpoint`, `create_run`, `add_labware_definition`, `enqueue_command`, setup/protocol command helpers, run/command state helpers |
 | `gdnasynth/ot2r/protocols.py` | `Protocol`, `init_protocol`, `define_liquid`, `upload_protocol` |
 | `gdnasynth/ot2r/serialization.py` | `to_jsonable` (`singledispatch`) |
-| `gdnasynth/ot2r/buildconfig.py` | Interactive configuration builder |
 
 ## 2. HTTP API essentials (observed)
 

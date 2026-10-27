@@ -35,10 +35,9 @@ The client is the bottom layer; run-control and orchestration live above it.
 
 ## 2. Layering and the `sender` seam
 
-**[done]** Command functions do not take a whole `Configuration`. The
+**[done]** Command functions do not take a whole configuration object. The
 connection details they need (`robot_address`, `opentrons_version`) are bound
-into a pre-configured request sender that is passed explicitly, keeping
-`Configuration` in the higher layer:
+into a pre-configured request sender that is passed explicitly:
 
 ```python
 class RequestSender(Protocol):
@@ -46,8 +45,7 @@ class RequestSender(Protocol):
     def __call__(self, endpoint: str, method: HTTPRequestMethod,
                  data: dict, **kwargs: Any) -> Response: ...
 
-sender = make_request_sender(config.robot_address,
-                             config.opentrons_version)
+sender = make_request_sender(robot_address, opentrons_version)
 
 def create_run(sender: RequestSender, runtype: RunType,
                offsets: LabwareOffsets, protocol_id=None) -> Run: ...
@@ -74,11 +72,11 @@ Style: eschew OO beyond typing/`Protocol`s — stay functional.
 **[future]** Function chaining or context-manager-like patterns may improve
 readability once call sites are known.
 
-**[future]** `Configuration` currently serves two roles — *connection*
-(`robot_address`, `opentrons_version`) and *deck setup* (labware, pipettes,
-custom definitions, protocol file). Extract a connection-level object that
-produces the sender, so connection concerns stop leaking into deck
-configuration.
+**[done 2026-10-27]** `Configuration`, `ConfigurationException` and the
+`buildconfig.py` builder were removed — they were premature. `LabwareConfig` and
+`PipetteConfig` were renamed to `Labware` and `Pipette`. Probe/config types will
+be redesigned when the setup and orchestration code is written; the `sender`
+remains the connection seam.
 
 ## 3. Type design
 
@@ -201,7 +199,7 @@ hardware finished initialising) and bad ids that only fail at execution
 Tracked as tasks in `ot2-HTTP-API-interaction-tasks-and-todos.md`:
 `LocationSequence` union, remaining `parse_run_result` fields, offset
 `id`/`createdAt`, optional legacy-location fields, typed command params,
-command-id vs resource-id result shape, `Configuration` split, `__slots__`,
+command-id vs resource-id result shape, `__slots__`,
 `None`-omission verification, `HardwareNotYetInitialized` policy, and the
 `waitUntilComplete` enqueue parameter.
 

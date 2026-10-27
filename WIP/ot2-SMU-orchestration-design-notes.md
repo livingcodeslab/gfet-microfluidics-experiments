@@ -339,7 +339,7 @@ like "aspirate 10 µL of reagent A" and a step like
 - **domain intent** — experiment terms (reagents, wells, chips, readings);
 - **device realization** — plumbing terms (pipettes, labware ids, flow rates).
 
-The orchestrator must never see a `PipetteConfig` or a `flow_rate`.
+The orchestrator must never see a `Pipette` or a `flow_rate`.
 
 ### 10.2 The levels
 

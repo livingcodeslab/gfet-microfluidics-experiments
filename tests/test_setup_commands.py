@@ -9,7 +9,7 @@ from gdnasynth.ot2r.commands.runs.runs import (add_labware_definition,
                                                load_pipette)
 from gdnasynth.ot2r.commands.runs.types import EngineStatus, Run, RunType
 from gdnasynth.ot2r.commands.types import DefinitionUri
-from gdnasynth.ot2r.types import LabwareConfig, PipetteConfig
+from gdnasynth.ot2r.types import Labware, Pipette
 
 RUN_ID = "4023a0e2-d70d-4f6e-91f7-9808dd170273"
 
@@ -76,12 +76,12 @@ def test_add_labware_definition(tmp_path):
 def test_load_labware():
     """Test that load_labware enqueues a loadLabware command.
 
-    GIVEN: a LabwareConfig and a capturing sender
+    GIVEN: a Labware and a capturing sender
     WHEN: load_labware(...) is called
     THEN: a loadLabware command is enqueued with the labware's parameters
     """
     sender, calls = _capture()
-    labware = LabwareConfig(
+    labware = Labware(
         labware_name="opentrons_96_filtertiprack_20ul",
         load_slot=7,
         labware_id=uuid.UUID("32dbb5b7-710d-428b-bff0-03e31351e25f"),
@@ -106,12 +106,12 @@ def test_load_labware():
 def test_load_pipette():
     """Test that load_pipette enqueues a loadPipette command.
 
-    GIVEN: a PipetteConfig and a capturing sender
+    GIVEN: a Pipette and a capturing sender
     WHEN: load_pipette(...) is called
     THEN: a loadPipette command is enqueued with the pipette's parameters
     """
     sender, calls = _capture()
-    pipette = PipetteConfig(
+    pipette = Pipette(
         pipette_name="p20_single_gen2",
         mount="left",
         pipette_id=uuid.UUID("7806a233-8012-4d99-8887-970935f103e1"))

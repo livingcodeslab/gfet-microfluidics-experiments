@@ -5,7 +5,7 @@ import uuid
 from gdnasynth.ot2r.commands.base_types import NonEmptyString
 from gdnasynth.ot2r.commands.runs import runs
 from gdnasynth.ot2r.commands.runs.types import EngineStatus, Run, RunType
-from gdnasynth.ot2r.types import LabwareConfig, PipetteConfig
+from gdnasynth.ot2r.types import Labware, Pipette
 
 RUN_ID = "4023a0e2-d70d-4f6e-91f7-9808dd170273"
 
@@ -38,14 +38,14 @@ def _capture():
 
 
 def _pipette():
-    return PipetteConfig(
+    return Pipette(
         pipette_name="p20_single_gen2",
         mount="left",
         pipette_id=uuid.UUID("7806a233-8012-4d99-8887-970935f103e1"))
 
 
 def _tiprack():
-    return LabwareConfig(
+    return Labware(
         labware_name="opentrons_96_filtertiprack_20ul",
         load_slot=7,
         labware_id=uuid.UUID("32dbb5b7-710d-428b-bff0-03e31351e25f"))
@@ -82,7 +82,7 @@ def test_aspirate():
     THEN: an aspirate command is enqueued with a protocol intent
     """
     sender, calls = _capture()
-    reservoir = LabwareConfig(
+    reservoir = Labware(
         labware_name="nest_12_reservoir_15ml",
         load_slot=3,
         labware_id=uuid.UUID("fe305793-e2b6-40ce-94d7-2b55549b1b57"))
@@ -110,7 +110,7 @@ def test_dispense():
     THEN: a dispense command is enqueued with a protocol intent
     """
     sender, calls = _capture()
-    chip = LabwareConfig(
+    chip = Labware(
         labware_name="livingcodeslab_graphenea_card_adapter",
         load_slot=1,
         labware_id=uuid.UUID("c9c762e1-8205-4ccd-be32-6535fd0e9514"),
@@ -205,7 +205,7 @@ def test_aspirate_with_well_location():
     THEN: the aspirate command carries that wellLocation
     """
     sender, calls = _capture()
-    reservoir = LabwareConfig(
+    reservoir = Labware(
         labware_name="nest_12_reservoir_15ml",
         load_slot=3,
         labware_id=uuid.UUID("fe305793-e2b6-40ce-94d7-2b55549b1b57"))
@@ -232,7 +232,7 @@ def test_dispense_with_well_location():
     THEN: the dispense command carries that wellLocation
     """
     sender, calls = _capture()
-    chip = LabwareConfig(
+    chip = Labware(
         labware_name="livingcodeslab_graphenea_card_adapter",
         load_slot=1,
         labware_id=uuid.UUID("c9c762e1-8205-4ccd-be32-6535fd0e9514"),
@@ -302,7 +302,7 @@ def test_load_liquid():
     THEN: a loadLiquid command is enqueued with those volumes
     """
     sender, calls = _capture()
-    reservoir = LabwareConfig(
+    reservoir = Labware(
         labware_name="nest_12_reservoir_15ml",
         load_slot=3,
         labware_id=uuid.UUID("fe305793-e2b6-40ce-94d7-2b55549b1b57"))

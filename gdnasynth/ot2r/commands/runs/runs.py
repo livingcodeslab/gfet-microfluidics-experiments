@@ -19,7 +19,7 @@ from gdnasynth.ot2r.commands.types import (Command,
                                            LegacyLabwareOffsetLocation,
                                            LoadedLabware)
 
-from gdnasynth.ot2r.types import LabwareConfig, PipetteConfig
+from gdnasynth.ot2r.types import Labware, Pipette
 
 from .types import Run, RunType, EngineStatus
 
@@ -232,14 +232,14 @@ def add_labware_definition(
 
 
 def load_labware(
-        sender: RequestSender, run: Run, labware: LabwareConfig
+        sender: RequestSender, run: Run, labware: Labware
 ) -> dict:
     """Enqueue a ``loadLabware`` command for the run.
 
     :param run: The run to load the labware into.
     :type run: gdnasynth.ot2r.commands.runs.Run
     :param labware: The labware configuration to load.
-    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :type labware: gdnasynth.ot2r.types.Labware
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
 
@@ -259,14 +259,14 @@ def load_labware(
 
 
 def load_pipette(
-        sender: RequestSender, run: Run, pipette: PipetteConfig
+        sender: RequestSender, run: Run, pipette: Pipette
 ) -> dict:
     """Enqueue a ``loadPipette`` command for the run.
 
     :param run: The run to load the pipette into.
     :type run: gdnasynth.ot2r.commands.runs.Run
     :param pipette: The pipette configuration to load.
-    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :type pipette: gdnasynth.ot2r.types.Pipette
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
 
@@ -344,8 +344,8 @@ def enqueue_command(
 def pick_up_tip(
         sender: RequestSender,
         run: Run,
-        pipette: PipetteConfig,
-        labware: LabwareConfig,
+        pipette: Pipette,
+        labware: Labware,
         well_name: str,
         well_location: Optional[dict] = None
 ) -> dict:
@@ -354,9 +354,9 @@ def pick_up_tip(
     :param run: The run to pick up a tip in.
     :type run: gdnasynth.ot2r.commands.runs.Run
     :param pipette: The pipette to use.
-    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :type pipette: gdnasynth.ot2r.types.Pipette
     :param labware: The tiprack to pick the tip from.
-    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :type labware: gdnasynth.ot2r.types.Labware
     :param well_name: The well to pick the tip from.
     :type well_name: str
     :param well_location: An optional well location, e.g.
@@ -384,8 +384,8 @@ def pick_up_tip(
 def aspirate(
         sender: RequestSender,
         run: Run,
-        pipette: PipetteConfig,
-        labware: LabwareConfig,
+        pipette: Pipette,
+        labware: Labware,
         well_name: str,
         volume: float,
         flow_rate: float,
@@ -396,9 +396,9 @@ def aspirate(
     :param run: The run to aspirate in.
     :type run: gdnasynth.ot2r.commands.runs.Run
     :param pipette: The pipette to use.
-    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :type pipette: gdnasynth.ot2r.types.Pipette
     :param labware: The labware to aspirate from.
-    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :type labware: gdnasynth.ot2r.types.Labware
     :param well_name: The well to aspirate from.
     :type well_name: str
     :param volume: The volume to aspirate, in µL.
@@ -432,8 +432,8 @@ def aspirate(
 def dispense(
         sender: RequestSender,
         run: Run,
-        pipette: PipetteConfig,
-        labware: LabwareConfig,
+        pipette: Pipette,
+        labware: Labware,
         well_name: str,
         volume: float,
         flow_rate: float,
@@ -444,9 +444,9 @@ def dispense(
     :param run: The run to dispense in.
     :type run: gdnasynth.ot2r.commands.runs.Run
     :param pipette: The pipette to use.
-    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :type pipette: gdnasynth.ot2r.types.Pipette
     :param labware: The labware to dispense to.
-    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :type labware: gdnasynth.ot2r.types.Labware
     :param well_name: The well to dispense to.
     :type well_name: str
     :param volume: The volume to dispense, in µL.
@@ -480,8 +480,8 @@ def dispense(
 def drop_tip(
         sender: RequestSender,
         run: Run,
-        pipette: PipetteConfig,
-        labware: LabwareConfig,
+        pipette: Pipette,
+        labware: Labware,
         well_name: str,
         well_location: Optional[dict] = None
 ) -> dict:
@@ -490,9 +490,9 @@ def drop_tip(
     :param run: The run to drop the tip in.
     :type run: gdnasynth.ot2r.commands.runs.Run
     :param pipette: The pipette to use.
-    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :type pipette: gdnasynth.ot2r.types.Pipette
     :param labware: The labware to drop the tip into.
-    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :type labware: gdnasynth.ot2r.types.Labware
     :param well_name: The well to drop the tip into.
     :type well_name: str
     :param well_location: An optional well location, e.g.
@@ -535,7 +535,7 @@ def home(sender: RequestSender, run: Run) -> dict:
 
 
 def trash_tip(
-        sender: RequestSender, run: Run, pipette: PipetteConfig
+        sender: RequestSender, run: Run, pipette: Pipette
 ) -> tuple[dict, dict]:
     """Dispose of the pipette's tip in the OT-2's fixed trash.
 
@@ -548,7 +548,7 @@ def trash_tip(
     :param run: The run to dispose of the tip in.
     :type run: gdnasynth.ot2r.commands.runs.Run
     :param pipette: The pipette whose tip to dispose of.
-    :type pipette: gdnasynth.ot2r.types.PipetteConfig
+    :type pipette: gdnasynth.ot2r.types.Pipette
 
     :rtype tuple[dict, dict]
     """
@@ -666,7 +666,7 @@ def load_liquid(
         sender: RequestSender,
         run: Run,
         liquid_id: NonEmptyString,
-        labware: LabwareConfig,
+        labware: Labware,
         volume_by_well: dict
 ) -> dict:
     """Enqueue a ``loadLiquid`` command for the run.
@@ -678,7 +678,7 @@ def load_liquid(
     :param liquid_id: The id of a liquid defined by the run's protocol.
     :type liquid_id: gdnasynth.ot2r.commands.base_types.NonEmptyString
     :param labware: The labware holding the liquid.
-    :type labware: gdnasynth.ot2r.types.LabwareConfig
+    :type labware: gdnasynth.ot2r.types.Labware
     :param volume_by_well: Volumes (µL) keyed by well name.
     :type volume_by_well: dict
 
