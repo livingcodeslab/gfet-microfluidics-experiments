@@ -152,11 +152,13 @@ failure; the orchestrator decides what to show.
 ### 9.1 One `RobotState`, not per-concern ledgers
 
 ```python
+class LiquidId(uuid.UUID):
+    """Identifies a liquid; `str(liquid_id)` is the Opentrons `liquidId` key."""
+
 @dataclass(frozen=True)
 class Well:
-    volume_ul: float
-    capacity_ul: float        # mandatory; there is no "uncapped" well
-    # invariant: 0 <= volume_ul <= capacity_ul
+    components: Mapping[LiquidId, float]    # liquid -> volume_ul (> 0)
+    capacity_ul: float                      # mandatory; sum(components) <= capacity_ul
 
 @dataclass(frozen=True)
 class Liquids:
@@ -173,6 +175,26 @@ class RobotState:
     tip_on_pipette: bool
 ```
 
+#### Composition (2026-10-27)
+
+A well holds a **multiset of liquids**, not just a volume: `components` maps
+each liquid to how much of it is present. An empty well is `components == {}`;
+total volume is `sum(components.values())`.
+
+- `dispense(liquid, amount)` adds to that liquid's component — mixing *is*
+  addition (2 µL A + 3 µL B -> A=2, B=3, total 5).
+- `aspirate(amount)` removes the amount **proportionally from every component**
+  (well-mixed assumption). **Known issue, deferred:** real aspiration from a
+  mixture does not split perfectly proportionally, and reactions that consume or
+  produce volume are not modelled.
+- Liquid identity comes from the caller (the protocol/config `liquidId`s); the
+  ledger never guesses it. `str(liquid_id)` is used as the protocol key.
+- `volume(...)` returns the total; `liquid_volume(...)` returns one component
+  (0.0 when absent).
+- **Parlance:** we use Opentrons' word *liquid* for these entities; "reagent" is
+  prose only. A `Liquid` metadata type (id, display name, description, colour)
+  belongs to the workflow config and is deferred.
+
 #### Wells vs contents (2026-10-27)
 
 Three "unknown" states must not be conflated:
@@ -181,10 +203,10 @@ Three "unknown" states must not be conflated:
 | --- | --- | --- |
 | labware never registered | config bug | `UnknownLabwareError` |
 | well not in the labware's well set (`M1` in a 96-well plate) | typo | `UnknownWellError` |
-| well exists but nothing defined/dispensed yet (`A9`) | normal | `volume == 0.0` |
+| well exists but nothing defined/dispensed yet (`A9`) | normal | empty (`components == {}`) |
 
 `Liquids.contents` is well set *and* contents at once: the set of wells for a
-labware is the set of wells that exist. They are seeded at volume 0 by
+labware is the set of wells that exist. They are seeded as empty wells by
 
 ```python
 @dataclass(frozen=True)
@@ -194,24 +216,36 @@ class WellCapacities:
     capacities: Mapping[str, float]   # well -> capacity_ul; the keys ARE the wells
 
 def register(liquids: Liquids, wells: WellCapacities) -> Liquids:
-    """Seed every well of `wells` at volume 0, preserving existing volumes."""
+    """Seed every well of `wells` as empty, preserving existing contents."""
 ```
 
 The id and the well set travel together, so one plate's geometry can never be
 registered under another plate's id. `register` also rejects re-registering a
 `labware_id` with a **different well set** — which is exactly what a
 wrong-definition mix-up looks like (96-well A-H x 1-12 vs 384-well A-P x 1-24).
-Re-registering with the same wells updates capacities, but validates them
-against the volumes already present.
+
+**Open question — `register` on a non-empty labware.** `register` is meant to be
+a *set-up* operation, so arguably it should refuse to run once a well holds
+liquid, rather than silently preserving it. Current decision: keep preserving
+contents and **revisit** (tracked in the tasks file).
 
 Capacities (and the authoritative well list) come from a labware definition
-(`wells[*].totalLiquidVolume`, keyed by `ordering`). Staged, pure first:
+(`wells[*].totalLiquidVolume`, keyed by `ordering`). Sources, best first:
+
+- **Robot**: `GET /runs/{runId}/loaded_labware_definitions` returns the full
+  definitions of a run's loaded labware (verified 2026-10-27 against API 26.6.0:
+  12 wells, `totalLiquidVolume: 15000` for the reservoir). Populated by
+  `loadLabware`, and includes uploaded custom definitions. Normal runs only — on
+  a maintenance-run id the route answers `409 RunStopped`.
+- **Offline**: `opentrons-shared-data` (standard labware), as a fallback.
+- Vendoring definition JSONs works but is not viable long-term.
+
+Staged, pure first:
 
 - `wells_from_definition(labware_id, definition) -> WellCapacities` — works for
   standard and custom definitions alike.
 - later `wells_from_labware(labware, loader) -> WellCapacities` — feeds the above
-  from `opentrons-shared-data` (offline, standard labware) or a cached robot
-  lookup.
+  from the run's loaded definitions (preferred) or `opentrons-shared-data`.
 
 **Why not on `Labware`.** Capacity is not a property of labware: lids, adapters
 and aluminium blocks have none, and in a tube rack the *tubes* have capacity,
@@ -237,17 +271,18 @@ another.
 #### Guards
 
 - `aspirate`: requires `tip_on_pipette`, `volume > 0`, and
-  `available >= volume` (**exact**; no dead-volume tolerance yet).
-- `dispense`: requires `tip_on_pipette`, and `target + volume <= capacity`
-  (capacity is always known).
+  `total volume >= volume` (**exact**; no dead-volume tolerance yet); the amount
+  is removed proportionally (see Composition).
+- `dispense`: requires `tip_on_pipette`, a `liquid`, `volume > 0`, and
+  `total volume + volume <= capacity` (capacity is always known).
 
 #### Assumptions (deliberate simplifications)
 
-- Volume arithmetic is **linear/additive** (2 µL A + 3 µL B -> 5 µL); reactions
-  that consume or produce volume are **not** modelled.
-- `Liquids` tracks **volume only**, not composition (which reagents are in a
-  well). A composition ledger, if needed, is separate.
-- A defined reagent differs from a reaction well only in starting non-zero.
+- Mixing is **additive**: components are summed (2 µL A + 3 µL B -> A=2, B=3).
+- Reactions that consume or produce volume are **not** modelled.
+- Aspirating from a mixture removes proportionally across components; this is an
+  approximation and a **known issue** (deferred).
+- Liquid identity is supplied by the caller (config/protocol `liquidId`s).
 
 ### 9.2 The state is a projection of the queued future
 

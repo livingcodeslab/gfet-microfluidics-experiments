@@ -48,10 +48,16 @@ patch). Start with pure logic that needs no robot.
       `{well: capacity_ul}` from a labware definition (`ordering` +
       `wells[*].totalLiquidVolume`), so `register` needs no hand-written maps.
 - [ ] `wells_from_labware(labware, loader) -> WellCapacities`: feed the above
-      from `opentrons-shared-data` (offline, standard labware) or a cached robot
-      lookup; possibly lazy-load and cache at first use.
-- [ ] Composition ledger (which reagents are in a well) — only if needed.
-- [ ] Reaction volume effects (mixing is assumed linear/additive today).
+      from `GET /runs/{runId}/loaded_labware_definitions` (preferred; verified
+      2026-10-27) or `opentrons-shared-data` (offline fallback); possibly
+      lazy-load and cache at first use.
+- [ ] **Review:** should `register` refuse to run once a well holds liquid
+      (set-up-only invariant), instead of preserving existing contents?
+- [ ] **Review:** aspirating from a mixture removes proportionally; this is an
+      approximation (real aspiration does not split evenly). Revisit if needed.
+- [ ] Reaction volume effects (mixing is assumed additive today).
+- [ ] A `Liquid` metadata type (id, display name, description, colour) for the
+      workflow config; the ledger needs only `LiquidId`.
 - [ ] Robot-side liquid tracking (`loadLiquid`) — blocked by the protocol↔
       enqueue short-circuit; only revisit if the ≥1-command protocol probe
       succeeds.
