@@ -160,7 +160,7 @@ class Well:
 
 @dataclass(frozen=True)
 class Liquids:
-    contents: Mapping[LabwareId, Mapping[str, Well]]  # the keys ARE the layout
+    contents: Mapping[LabwareId, Mapping[str, Well]]  # the keys ARE the well set
 
 @dataclass(frozen=True)
 class Tips:
@@ -173,32 +173,56 @@ class RobotState:
     tip_on_pipette: bool
 ```
 
-#### Layout vs contents (2026-10-27)
+#### Wells vs contents (2026-10-27)
 
 Three "unknown" states must not be conflated:
 
 | case | meaning | behaviour |
 | --- | --- | --- |
 | labware never registered | config bug | `UnknownLabwareError` |
-| well not in the labware's layout (`M1` in a 96-well plate) | typo | `UnknownWellError` |
+| well not in the labware's well set (`M1` in a 96-well plate) | typo | `UnknownWellError` |
 | well exists but nothing defined/dispensed yet (`A9`) | normal | `volume == 0.0` |
 
-`Liquids.contents` is layout *and* contents at once: the set of wells for a
+`Liquids.contents` is well set *and* contents at once: the set of wells for a
 labware is the set of wells that exist. They are seeded at volume 0 by
 
 ```python
-def register(liquids, labware, capacities: Mapping[str, float]) -> Liquids:
-    """Seed every well of `labware` at volume 0, preserving existing volumes."""
+@dataclass(frozen=True)
+class WellCapacities:
+    """The liquid-holding wells of one labware, and how much each can hold."""
+    labware_id: uuid.UUID
+    capacities: Mapping[str, float]   # well -> capacity_ul; the keys ARE the wells
+
+def register(liquids: Liquids, wells: WellCapacities) -> Liquids:
+    """Seed every well of `wells` at volume 0, preserving existing volumes."""
 ```
 
-Capacities (and the authoritative well list) ultimately come from the labware
-definition (`ordering` + `wells[*].totalLiquidVolume`). Staged: for now
-`register` takes an explicit `{well: capacity_ul}` map; a
-`capacities_from_definition(...)` helper comes later.
+The id and the well set travel together, so one plate's geometry can never be
+registered under another plate's id. `register` also rejects re-registering a
+`labware_id` with a **different well set** — which is exactly what a
+wrong-definition mix-up looks like (96-well A-H x 1-12 vs 384-well A-P x 1-24).
+Re-registering with the same wells updates capacities, but validates them
+against the volumes already present.
 
-**Keyed by id, not by model.** Labware is keyed by its UUID, so several plates
-or racks of the *same model* are separate entries; registering one must not
-touch another.
+Capacities (and the authoritative well list) come from a labware definition
+(`wells[*].totalLiquidVolume`, keyed by `ordering`). Staged, pure first:
+
+- `wells_from_definition(labware_id, definition) -> WellCapacities` — works for
+  standard and custom definitions alike.
+- later `wells_from_labware(labware, loader) -> WellCapacities` — feeds the above
+  from `opentrons-shared-data` (offline, standard labware) or a cached robot
+  lookup.
+
+**Why not on `Labware`.** Capacity is not a property of labware: lids, adapters
+and aluminium blocks have none, and in a tube rack the *tubes* have capacity,
+not the rack. So well/capacity geometry is a separate value
+(`WellCapacities`), and non-liquid labware never enters the ledger (tipracks are
+tracked by `Tips`). `Labware` stays the load config (name, slot, namespace,
+version, id) consumed by `load_labware`.
+
+**Keyed by id, not by model.** Several plates or racks of the *same model* are
+separate entries, distinguished by their UUIDs; registering one must not touch
+another.
 
 #### Tips
 

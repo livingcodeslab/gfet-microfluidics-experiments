@@ -44,9 +44,12 @@ patch). Start with pure logic that needs no robot.
 - [ ] `pick_next_tip(...)` convenience: resolve the next available tip from a
       named rack (**low priority**). Must handle partially used racks picked
       haphazardly, given a way to enumerate which wells actually hold tips.
-- [ ] `capacities_from_definition(...)`: derive `{well: capacity_ul}` from a
-      labware definition (`ordering` + `wells[*].totalLiquidVolume`), so
-      `register` can seed a full layout without hand-written maps.
+- [ ] `wells_from_definition(labware_id, definition) -> WellCapacities`: derive
+      `{well: capacity_ul}` from a labware definition (`ordering` +
+      `wells[*].totalLiquidVolume`), so `register` needs no hand-written maps.
+- [ ] `wells_from_labware(labware, loader) -> WellCapacities`: feed the above
+      from `opentrons-shared-data` (offline, standard labware) or a cached robot
+      lookup; possibly lazy-load and cache at first use.
 - [ ] Composition ledger (which reagents are in a well) — only if needed.
 - [ ] Reaction volume effects (mixing is assumed linear/additive today).
 - [ ] Robot-side liquid tracking (`loadLiquid`) — blocked by the protocol↔
