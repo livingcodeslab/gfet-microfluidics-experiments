@@ -159,14 +159,49 @@ class Well:
     # invariant: 0 <= volume_ul <= capacity_ul
 
 @dataclass(frozen=True)
+class Liquids:
+    contents: Mapping[LabwareId, Mapping[str, Well]]  # the keys ARE the layout
+
+@dataclass(frozen=True)
+class Tips:
+    racks: Mapping[RackId, frozenset[str]]  # wells still holding a tip
+
+@dataclass(frozen=True)
 class RobotState:
-    liquids: Liquids          # {labware_id: {well: Well}}
-    tips: Tips                # {rack_id: set of wells still holding a tip}
+    liquids: Liquids
+    tips: Tips
     tip_on_pipette: bool
 ```
 
-- **Multiple** liquids and **multiple** tipracks are tracked at once, keyed by
-  labware id; each well also carries its capacity (for the overflow guard).
+#### Layout vs contents (2026-10-27)
+
+Three "unknown" states must not be conflated:
+
+| case | meaning | behaviour |
+| --- | --- | --- |
+| labware never registered | config bug | `UnknownLabwareError` |
+| well not in the labware's layout (`M1` in a 96-well plate) | typo | `UnknownWellError` |
+| well exists but nothing defined/dispensed yet (`A9`) | normal | `volume == 0.0` |
+
+`Liquids.contents` is layout *and* contents at once: the set of wells for a
+labware is the set of wells that exist. They are seeded at volume 0 by
+
+```python
+def register(liquids, labware, capacities: Mapping[str, float]) -> Liquids:
+    """Seed every well of `labware` at volume 0, preserving existing volumes."""
+```
+
+Capacities (and the authoritative well list) ultimately come from the labware
+definition (`ordering` + `wells[*].totalLiquidVolume`). Staged: for now
+`register` takes an explicit `{well: capacity_ul}` map; a
+`capacities_from_definition(...)` helper comes later.
+
+**Keyed by id, not by model.** Labware is keyed by its UUID, so several plates
+or racks of the *same model* are separate entries; registering one must not
+touch another.
+
+#### Tips
+
 - `tip_on_pipette` is a **boolean**; we do not track where the tip came from.
 - Putting a tip back resolves to **the first empty well of a compatible rack**
   (compatibility = the racks configured for that pipette); error if none.
@@ -175,12 +210,20 @@ class RobotState:
   **low-priority** item; it must cope with haphazardly used racks, assuming we
   can enumerate which wells actually hold tips.
 
-Guards:
+#### Guards
 
 - `aspirate`: requires `tip_on_pipette`, `volume > 0`, and
-  `available >= volume` (with a tolerance for dead volume).
-- `dispense`: requires `tip_on_pipette`, and `target + volume <= capacity` when
-  the capacity is known.
+  `available >= volume` (**exact**; no dead-volume tolerance yet).
+- `dispense`: requires `tip_on_pipette`, and `target + volume <= capacity`
+  (capacity is always known).
+
+#### Assumptions (deliberate simplifications)
+
+- Volume arithmetic is **linear/additive** (2 µL A + 3 µL B -> 5 µL); reactions
+  that consume or produce volume are **not** modelled.
+- `Liquids` tracks **volume only**, not composition (which reagents are in a
+  well). A composition ledger, if needed, is separate.
+- A defined reagent differs from a reaction well only in starting non-zero.
 
 ### 9.2 The state is a projection of the queued future
 
