@@ -151,7 +151,6 @@ def send_request(
         "Accept": "application/json",
         "opentrons-version": f"{opentrons_version}",
     }
-    timeout = kwargs.pop("timeout", (9.13, 20))
     if files is None:
         headers["Content-Type"] = "application/json"
         body = {("params" if _method == "get" else "json"): to_jsonable(data)}
@@ -160,7 +159,7 @@ def send_request(
     try:
         response = request_method(
             url=urljoin(robot_address, endpoint),
-            headers=headers, timeout=timeout, **body, **kwargs)
+            headers=headers, **body, **kwargs)
     except requests.exceptions.RequestException as _reqerr:
         raise RobotUnreachable(
             f"Could not reach the OT-2R robot at {robot_address}."
