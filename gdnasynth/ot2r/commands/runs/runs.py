@@ -6,7 +6,7 @@ import datetime
 from pathlib import Path
 from typing import Optional, Sequence, Union
 
-from gdnasynth.ot2r.http import RequestSender
+from gdnasynth.ot2r.http import RequestSender, send_api_request
 from gdnasynth.ot2r.commands.base_types import NonEmptyString
 from gdnasynth.ot2r.commands.types import (Command,
                                            DefinitionUri,
@@ -198,10 +198,7 @@ def create_run(
     data: dict = {"labwareOffsets": offsets}
     if protocol_id is not None:
         data["protocolId"] = str(protocol_id)
-    resp = sender(
-        endpoint=run_endpoint(runtype),
-        method="POST",
-        data={"data": data})
+    resp = send_api_request(sender, run_endpoint(runtype), "POST", data)
     logger.debug("Response text (create_run): %s", resp.text)
     return parse_run_result(resp.json()["data"], runtype)
 
@@ -224,10 +221,11 @@ def add_labware_definition(
 
     :rtype gdnasynth.ot2r.commands.types.DefinitionUri
     """
-    resp = sender(
-        endpoint=f"{run_endpoint(run.runType)}/{run.id}/labware_definitions",
-        method="POST",
-        data={"data": json.loads(definition.read_text(encoding="utf-8"))})
+    definition_data = json.loads(definition.read_text(encoding="utf-8"))
+    resp = send_api_request(
+        sender,
+        f"{run_endpoint(run.runType)}/{run.id}/labware_definitions",
+        "POST", definition_data)
     return DefinitionUri(resp.json()["data"]["definitionUri"])
 
 
@@ -297,10 +295,9 @@ def enqueue_command(
 
     :rtype dict
     """
-    resp = sender(
-        endpoint=f"{run_endpoint(run.runType)}/{run.id}/commands",
-        method="POST",
-        data={"data": command})
+    resp = send_api_request(
+        sender, f"{run_endpoint(run.runType)}/{run.id}/commands", "POST",
+        command)
     logger.debug("Response text (enqueue_command): %s", resp.text)
     return resp.json()["data"]
 
@@ -726,10 +723,9 @@ def wait_for_resume(
 
 def _run_action(sender: RequestSender, run: Run, action_type: str) -> dict:
     """POST a run control action and return the action data."""
-    resp = sender(
-        endpoint=f"{run_endpoint(run.runType)}/{run.id}/actions",
-        method="POST",
-        data={"data": {"actionType": action_type}})
+    resp = send_api_request(
+        sender, f"{run_endpoint(run.runType)}/{run.id}/actions", "POST",
+        {"actionType": action_type})
     return resp.json()["data"]
 
 

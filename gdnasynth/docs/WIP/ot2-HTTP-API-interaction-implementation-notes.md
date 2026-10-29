@@ -28,6 +28,12 @@ Times are UTC. Where a change was merged, the commit is noted.
 - **Every response payload is wrapped in a top-level `data` envelope**
   (`{"data": {...}}`).
 - Error payloads have **no `data` key**: `{"errors": [APIError, ...]}`.
+- **Two request-body conventions.** Run and protocol endpoints wrap the body in
+  `{"data": ...}` (now centralised in `send_api_request`); the legacy `/robot/*`
+  and `/motors/*` endpoints take a **raw** body (send with `sender` directly).
+  Sending the envelope to a raw endpoint fails with e.g.
+  `body.target: Field required`. `send_request` itself sends `data` **verbatim**
+  — it never wraps.
 - Normal vs maintenance runs differ in (a) endpoint prefix `/runs` vs
   `/maintenance_runs`, and (b) a normal run must be told to *play*, while a
   maintenance run executes commands as they are enqueued.

@@ -13,6 +13,9 @@ from gdnasynth.ot2r.serialization import to_jsonable
 
 _GENERAL_ERROR_CODE = "4000"
 
+# The key robot-server uses to wrap most request bodies.
+_API_ENVELOPE_KEY = "data"
+
 
 class RobotError(Exception):
     """Base class for errors talking to the OT-2R robot."""
@@ -118,9 +121,13 @@ def send_request(
     :type method: gdnasynth.ot2r.types.HTTPRequestMethod
     :param opentrons_version: The Opentrons API version to use.
     :type opentrons_version: gdnasynth.ot2r.commands.types.OpentronsVersion
-    :param data: The data to send with the HTTP request.  For a multipart
-        upload, this holds the form fields and the files are passed via the
-        ``files`` keyword argument.
+    :param data: The body to send **verbatim**. It is passed straight through as
+        the JSON body (or as query parameters for ``GET``), so the caller decides
+        the wire shape. Most run/protocol endpoints expect the robot-server
+        ``{"data": ...}`` envelope — use :func:`send_api_request` for those. The
+        legacy ``/robot/*`` and ``/motors/*`` endpoints take a raw body and
+        should call the sender directly. For a multipart upload, this holds the
+        form fields and the files are passed via the ``files`` keyword argument.
     :type data: dict
 
     :rtype requests.Response
@@ -162,3 +169,30 @@ def send_request(
     if response.status_code >= 400:
         raise _response_error(response)
     return response
+
+
+def send_api_request(
+        sender: RequestSender,
+        endpoint: str,
+        method: HTTPRequestMethod,
+        payload: Any,
+        **kwargs: Any
+) -> requests.Response:
+    """Send a request whose body uses the robot-server ``{"data": ...}`` envelope.
+
+    Most run and protocol endpoints wrap their body in ``{"data": ...}``. The
+    legacy ``/robot/*`` and ``/motors/*`` endpoints do **not**; send those with
+    the sender directly (i.e. with a raw body).
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param endpoint: The endpoint to send the request to.
+    :type endpoint: str
+    :param method: The HTTP method to use.
+    :type method: gdnasynth.ot2r.types.HTTPRequestMethod
+    :param payload: The payload to wrap in the ``data`` envelope.
+    :type payload: dict
+    :rtype requests.Response
+    """
+    return sender(endpoint=endpoint, method=method,
+                  data={_API_ENVELOPE_KEY: payload}, **kwargs)
