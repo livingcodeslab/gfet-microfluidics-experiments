@@ -56,6 +56,13 @@ Progress and backlog for driving runs and the physical robot. Design in
 - [ ] Review: should `register` refuse once a well holds liquid (set-up-only)?
 - [ ] Review: aspirating from a mixture is proportional — an approximation.
 
+**Motion / retraction**
+
+- [ ] Verify `home` with `axes: ["leftZ"]` (and/or `["rightZ"]`) retracts only
+      the pipette's Z on the OT-2; then add
+      `retract_pipettes(sender, run, pipettes)` and refactor `home` to accept an
+      optional `axes` argument (design notes §5.9).
+
 **Housekeeping**
 
 - [ ] File the Opentrons bug report (see

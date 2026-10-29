@@ -374,6 +374,21 @@ domain intent to concrete steps, and hand the orchestrator operations to
 sequence. This preserves the device boundary while keeping the step types with
 their device.
 
+### 5.9 Retracting the pipette (`home` axes) — to verify
+
+Today `home(sender, run)` enqueues `{"commandType": "home"}` with **no params**,
+which homes *all* axes. To retract only the pipette, the `home` command takes
+`axes`. The protocol engine's `MotorAxis` values are `x`, `y`, `leftZ`,
+`rightZ`, `leftPlunger`, `rightPlunger`, `extensionZ`, `extensionJaw`,
+`axis96ChannelCam`; so for a left-mounted pipette `axes: ["leftZ"]` should
+retract it. (The engine notes that extra axes "may be implicitly homed to ensure
+accurate homing of the explicitly specified axes". The hardware's
+`/motors/engaged` names are different again: `z_l` / `z_r`.)
+
+Plan — verify on the robot first, then add
+`retract_pipettes(sender, run, pipettes)` that enqueues `home` with the Z axes of
+the given mounts, and refactor `home` to accept an optional `axes` argument.
+
 ## 6. Pre-flight and recovery guidance
 
 Every device has a pre-flight step before we hand it work. The orchestrator

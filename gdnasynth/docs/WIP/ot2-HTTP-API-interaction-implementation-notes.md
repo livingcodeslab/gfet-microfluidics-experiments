@@ -142,6 +142,12 @@ Test suite: 71 tests passing, `mypy` clean at HEAD `cd46e8e` (2026-10-19).
 - **Bad ids may not fail until execution**; state checks matter.
 - **Enqueue-while-paused is accepted** (201, `queued`) on a normal run paused at
   a `waitForResume`.
+- **Well geometry.** In a labware definition a well's `z` is the
+  **center-bottom** and `depth` is top-to-bottom, so the top is `z + depth`. The
+  engine's default `wellLocation.origin` is `top` (`WellOrigin.TOP`) for both
+  aspirate and dispense; `bottom` is `z`, and any `offset` is added on top of
+  the chosen origin. A wrong `z`/`depth` therefore shows up as the tip pressing
+  on, or floating above, the labware.
 
 ## 5. Shipped-surface conflicts and known gaps
 
