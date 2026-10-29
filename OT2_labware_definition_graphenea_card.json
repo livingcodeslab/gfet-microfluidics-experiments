@@ -1,0 +1,68 @@
+{
+    "ordering": [["A1", "B1"]],
+    "brand": {
+        "brand": "LivingCodesLab",
+        "brandId": []
+    },
+    "metadata": {
+        "displayName": "LivingCodesLab: Graphenea Card Adapter",
+        "displayCategory": "wellPlate",
+        "displayVolumeUnits": "µL"
+    },
+    "dimensions": {
+        "xDimension": 127.14,
+        "yDimension": 85.02,
+        "zDimension": 25
+    },
+    "wells": {
+        "A1": {
+            "depth": 1.5,
+            "x": 94.41,
+            "y": 63.52,
+            "z": 21.4,
+            "totalLiquidVolume": 20,
+            "diameter": 3,
+            "shape": "circular"
+        },
+        "B1": {
+            "depth": 1.5,
+            "x": 94.41,
+            "y": 23.52,
+            "z": 21.4,
+            "totalLiquidVolume": 20,
+            "diameter": 3,
+            "shape": "circular"
+        }
+    },
+    "groups": [{
+        "wells": ["A1", "B1"],
+        "metadata": {
+            "displayName": "mGFET Chip in LCC Socket",
+            "wellBottomShape": "flat"
+        },
+        "brand": {
+            "brand": "LivingCodesLab",
+            "brandId": ["mGFET-4D for Sensing Applications"],
+            "links": [
+                "https://www.graphenea.com/products/mgfet-4d-for-sensing-applications",
+                "https://cdn.shopify.com/s/files/1/0191/2296/files/2026_mGFET-D_4x4_v6_TDS_02-03-2026.pdf?v=1776930189",
+                "https://cdn.shopify.com/s/files/1/0191/2296/files/2026_Measurement_Protocols_mGFET_v3_27-02-2026.pdf?v=1776929336"
+            ]
+        }
+    }],
+    "parameters": {
+        "format": "irregular",
+        "quirks": [],
+        "isTiprack": false,
+        "isMagneticModuleCompatible": false,
+        "loadName": "livingcodeslab_graphenea_card_adapter"
+    },
+    "namespace": "livingcodeslab",
+    "version": 1,
+    "schemaVersion": 2,
+    "cornerOffsetFromSlot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+    }
+}
