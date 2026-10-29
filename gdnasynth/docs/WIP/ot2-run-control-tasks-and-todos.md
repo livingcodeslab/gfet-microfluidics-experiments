@@ -46,6 +46,16 @@ Progress and backlog for driving runs and the physical robot. Design in
       opt-in.
 - [ ] Consider reading `/motors/engaged` and `/robot/door/status` in pre-flight.
 
+**State tracking**
+
+- [ ] Track the attached tip's **type** (or its source rack/well), so a tip is
+      never returned to a rack of a different tip type — e.g. 200 µL vs 300 µL
+      tips on a `p300_single_gen2`. See design notes §4 (gotcha).
+- [ ] Implement `ot2r/liquids.py` against the red tests; then `tips.py`,
+      `state.py`, `steps.py`, `execute.py` (design notes §5).
+- [ ] Review: should `register` refuse once a well holds liquid (set-up-only)?
+- [ ] Review: aspirating from a mixture is proportional — an approximation.
+
 **Housekeeping**
 
 - [ ] File the Opentrons bug report (see
