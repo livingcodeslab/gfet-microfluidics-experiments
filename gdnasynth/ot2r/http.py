@@ -180,9 +180,10 @@ def send_api_request(
 ) -> requests.Response:
     """Send a request whose body uses the robot-server ``{"data": ...}`` envelope.
 
-    Most run and protocol endpoints wrap their body in ``{"data": ...}``. The
-    legacy ``/robot/*`` and ``/motors/*`` endpoints do **not**; send those with
-    the sender directly (i.e. with a raw body).
+    Most run endpoints wrap their JSON body in ``{"data": ...}``. Some endpoints
+    do **not**: protocol uploads are multipart form data (pass ``files=`` to the
+    sender), and the legacy ``/robot/*`` and ``/motors/*`` endpoints take a raw
+    JSON body — send those with the sender directly.
 
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
