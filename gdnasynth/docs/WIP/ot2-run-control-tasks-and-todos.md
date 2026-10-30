@@ -63,6 +63,13 @@ Progress and backlog for driving runs and the physical robot. Design in
       `retract_pipettes(sender, run, pipettes)` and refactor `home` to accept an
       optional `axes` argument (design notes §5.9).
 
+**Complex operations**
+
+- [ ] Extract `wash(neutral_reagent, target, wash_cycles, mix_cycles)` as a
+      composite step once the 3-reagent workflow has proven the sequence on the
+      robot (design notes §5.10). A `mix(...)` operation is the likely
+      prerequisite.
+
 **Housekeeping**
 
 - [ ] File the Opentrons bug report (see

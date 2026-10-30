@@ -389,6 +389,25 @@ Plan — verify on the robot first, then add
 `retract_pipettes(sender, run, pipettes)` that enqueues `home` with the Z axes of
 the given mounts, and refactor `home` to accept an optional `axes` argument.
 
+### 5.10 Complex operations to add later: `wash`
+
+The 3-reagent workflow needs a **wash** between reagents: dispense a neutral
+reagent (water) onto the chip, mix it with the film of the previous reagent
+(N aspirate/dispense cycles), and remove it — repeated M times — to dilute the
+residue towards 0X.
+
+Rather than open-coding that sequence in every workflow, we want it later as a
+**complex operation** (a composite step). It should take at least:
+
+- the neutral reagent (source liquid/labware/well);
+- the target to wash (labware/well);
+- optionally the number of wash cycles `M`;
+- optionally the number of mix cycles per wash `N`.
+
+For now the workflow script open-codes it; extract it once the sequence has been
+tested on the robot and we know the right defaults. A `mix(...)` operation will
+probably be the first thing to factor out of it.
+
 ## 6. Pre-flight and recovery guidance
 
 Every device has a pre-flight step before we hand it work. The orchestrator
