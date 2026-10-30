@@ -660,8 +660,13 @@ def delete_run(sender: RequestSender, run: Run) -> None:
         data={})
 
 
+# Ask for large pages: robot-server paginates the commands endpoint (the
+# default `pageLength` is 20).
+_COMMANDS_PAGE_LENGTH = 200
+
+
 def list_commands(sender: RequestSender, run: Run) -> Sequence[dict]:
-    """List the run's commands.
+    """List the run's commands, following the server's pagination.
 
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
@@ -670,11 +675,24 @@ def list_commands(sender: RequestSender, run: Run) -> Sequence[dict]:
 
     :rtype Sequence[dict]
     """
-    resp = sender(
-        endpoint=f"{run_endpoint(run.runType)}/{run.id}/commands",
-        method="GET",
-        data={})
-    return resp.json()["data"]
+    commands: list = []
+    cursor = 0
+    while True:
+        resp = sender(
+            endpoint=f"{run_endpoint(run.runType)}/{run.id}/commands",
+            method="GET",
+            data={"cursor": cursor, "pageLength": _COMMANDS_PAGE_LENGTH})
+        body = resp.json()
+        page = body["data"]
+        commands.extend(page)
+        meta = body.get("meta") or {}
+        total = meta.get("totalLength")
+        if total is None or not page:
+            # Older servers do not paginate: a single page is all there is.
+            return commands
+        cursor = (meta.get("cursor") or cursor) + len(page)
+        if cursor >= total:
+            return commands
 
 
 def get_command(
