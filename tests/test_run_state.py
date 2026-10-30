@@ -118,6 +118,37 @@ def test_list_commands():
     assert result == commands
 
 
+def test_list_commands_follows_pagination():
+    """Test that list_commands pages through a long command list.
+
+    GIVEN: a run whose commands are split over two pages
+    WHEN: list_commands(...) is called
+    THEN: every command is returned, in order, asking for large pages
+    """
+    pages = {
+        0: {
+            "data": [{"id": "cmd-1"}, {"id": "cmd-2"}],
+            "meta": {"cursor": 0, "totalLength": 4},
+        },
+        2: {
+            "data": [{"id": "cmd-3"}, {"id": "cmd-4"}],
+            "meta": {"cursor": 2, "totalLength": 4},
+        },
+    }
+    calls = []
+
+    def sender(endpoint, method, data, **kwargs):
+        calls.append({"endpoint": endpoint, "method": method, "data": data})
+        return _FakeResponse(pages[data["cursor"]])
+
+    result = runs.list_commands(sender, _run())
+
+    assert [command["id"] for command in result] == [
+        "cmd-1", "cmd-2", "cmd-3", "cmd-4"]
+    assert [call["data"]["cursor"] for call in calls] == [0, 2]
+    assert all(call["data"]["pageLength"] > 20 for call in calls)
+
+
 def test_get_command():
     """Test that get_command fetches a single command by id.
 
