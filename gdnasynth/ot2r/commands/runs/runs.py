@@ -514,21 +514,61 @@ def drop_tip(
     return enqueue_command(sender, run, command)
 
 
-def home(sender: RequestSender, run: Run) -> dict:
+def home(
+        sender: RequestSender,
+        run: Run,
+        axes: Sequence[str] = ()
+) -> dict:
     """Enqueue a ``home`` command for the run.
 
     :param run: The run to home.
     :type run: gdnasynth.ot2r.commands.runs.Run
+    :param axes: The motor axes to home, e.g. ``["leftZ"]``. The protocol
+        engine's axes are ``x``, ``y``, ``leftZ``, ``rightZ``,
+        ``leftPlunger``, ``rightPlunger``, ``extensionZ``, ``extensionJaw``
+        and ``axis96ChannelCam``. An empty sequence (the default) homes every
+        axis.
+    :type axes: Sequence[str]
     :param sender: A pre-configured request sender for the robot.
     :type sender: gdnasynth.ot2r.http.RequestSender
 
     :rtype dict
     """
+    params: dict = {}
+    if axes:
+        params["axes"] = [str(axis) for axis in axes]
     command = Command(
         commandType=NonEmptyString("home"),
-        params={},
+        params=params,
         intent="protocol")
     return enqueue_command(sender, run, command)
+
+
+def retract_pipettes(
+        sender: RequestSender,
+        run: Run,
+        pipettes: Sequence[Pipette]
+) -> dict:
+    """Enqueue a ``home`` command that retracts the given pipettes' Z axes.
+
+    Homes only the Z axis of each pipette's mount (``leftZ`` / ``rightZ``),
+    instead of homing every axis. Repeated mounts are collapsed to one axis.
+
+    :param sender: A pre-configured request sender for the robot.
+    :type sender: gdnasynth.ot2r.http.RequestSender
+    :param run: The run to retract the pipettes in.
+    :type run: gdnasynth.ot2r.commands.runs.Run
+    :param pipettes: The pipettes whose Z axes should be homed.
+    :type pipettes: Sequence[gdnasynth.ot2r.types.Pipette]
+
+    :rtype dict
+    """
+    mount_home_axis = {"left": "leftZ", "right": "rightZ"}
+    axes = list(dict.fromkeys(
+        mount_home_axis[pipette.mount] for pipette in pipettes))
+    if not axes:
+        raise ValueError("retract_pipettes needs at least one pipette")
+    return home(sender, run, axes=axes)
 
 
 def trash_tip(
