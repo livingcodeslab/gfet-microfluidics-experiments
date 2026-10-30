@@ -1,6 +1,9 @@
 """Tests for the protocol command helpers."""
 import datetime
 import uuid
+from dataclasses import replace
+
+import pytest
 
 from gdnasynth.ot2r.commands.base_types import NonEmptyString
 from gdnasynth.ot2r.commands.runs import runs
@@ -167,6 +170,117 @@ def test_home():
     assert str(command.commandType) == "home"
     assert command.intent == "protocol"
     assert command.params == {}
+
+
+def test_home_with_axes():
+    """Test that home can be limited to specific axes.
+
+    GIVEN: a capturing sender and a list of axes
+    WHEN: home(...) is called with axes
+    THEN: the axes are included in the home command's params
+    """
+    sender, calls = _capture()
+
+    runs.home(sender, _run(), axes=["leftZ"])
+
+    command = calls[-1]["data"]["data"]
+    assert str(command.commandType) == "home"
+    assert command.intent == "protocol"
+    assert command.params == {"axes": ["leftZ"]}
+
+
+def test_home_with_an_empty_axes_list_homes_everything():
+    """Test that an empty axes list means "home every axis".
+
+    GIVEN: an empty axes list
+    WHEN: home(...) is called
+    THEN: the home command carries no axes (so every axis is homed)
+    """
+    sender, calls = _capture()
+
+    runs.home(sender, _run(), axes=[])
+
+    command = calls[-1]["data"]["data"]
+    assert str(command.commandType) == "home"
+    assert command.params == {}
+
+
+def test_retract_pipettes_retracts_the_left_mount():
+    """Test that retract_pipettes homes the left pipette's Z axis.
+
+    GIVEN: a left-mounted pipette and a capturing sender
+    WHEN: retract_pipettes(...) is called
+    THEN: a single home command for leftZ is enqueued
+    """
+    sender, calls = _capture()
+
+    runs.retract_pipettes(sender, _run(), [_pipette()])
+
+    command = calls[-1]["data"]["data"]
+    assert str(command.commandType) == "home"
+    assert command.intent == "protocol"
+    assert command.params == {"axes": ["leftZ"]}
+    assert len(calls) == 1
+
+
+def test_retract_pipettes_retracts_the_right_mount():
+    """Test that retract_pipettes homes the right pipette's Z axis.
+
+    GIVEN: a right-mounted pipette and a capturing sender
+    WHEN: retract_pipettes(...) is called
+    THEN: a single home command for rightZ is enqueued
+    """
+    sender, calls = _capture()
+    pipette = replace(_pipette(), mount="right")
+
+    runs.retract_pipettes(sender, _run(), [pipette])
+
+    assert calls[-1]["data"]["data"].params == {"axes": ["rightZ"]}
+    assert len(calls) == 1
+
+
+def test_retract_pipettes_retracts_both_mounts():
+    """Test that retract_pipettes homes both pipettes in one command.
+
+    GIVEN: pipettes on both mounts and a capturing sender
+    WHEN: retract_pipettes(...) is called
+    THEN: a single home command lists both Z axes
+    """
+    sender, calls = _capture()
+    pipettes = [_pipette(), replace(_pipette(), mount="right")]
+
+    runs.retract_pipettes(sender, _run(), pipettes)
+
+    assert calls[-1]["data"]["data"].params == {
+        "axes": ["leftZ", "rightZ"]}
+    assert len(calls) == 1
+
+
+def test_retract_pipettes_lists_each_axis_once():
+    """Test that retract_pipettes does not repeat an axis.
+
+    GIVEN: two pipettes on the same mount
+    WHEN: retract_pipettes(...) is called
+    THEN: the shared axis is listed only once
+    """
+    sender, calls = _capture()
+
+    runs.retract_pipettes(sender, _run(), [_pipette(), _pipette()])
+
+    assert calls[-1]["data"]["data"].params == {"axes": ["leftZ"]}
+
+
+def test_retract_pipettes_requires_a_pipette():
+    """Test that retract_pipettes needs at least one pipette.
+
+    GIVEN: no pipettes
+    WHEN: retract_pipettes(...) is called
+    THEN: ValueError is raised
+    """
+    sender, _ = _capture()
+
+    with pytest.raises(ValueError):
+        runs.retract_pipettes(sender, _run(), [])
 
 
 def test_trash_tip():
