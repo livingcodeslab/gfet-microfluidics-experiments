@@ -184,3 +184,69 @@ def test_send_request_sends_files_as_multipart(monkeypatch):
     assert recorded["kwargs"]["data"] == {"protocol_kind": "standard"}
     assert "json" not in recorded["kwargs"]
     assert "Content-Type" not in recorded["kwargs"]["headers"]
+
+
+def test_make_request_sender_binds_a_default_timeout(monkeypatch):
+    """Test that the sender applies its bound timeout to every request.
+
+    GIVEN: a sender built with a default timeout
+    WHEN: a request is sent without an explicit timeout
+    THEN: requests receives the bound timeout
+    """
+    recorded = {}
+
+    def fake_post(url, **kwargs):
+        recorded.update(kwargs)
+        return _FakeResponse(payload={"data": {}})
+
+    monkeypatch.setattr(http.requests, "post", fake_post)
+    sender = http.make_request_sender("http://robot:31950", "*",
+                                      timeout=(5, 60))
+
+    sender(endpoint="/robot/home", method="POST", data={"target": "robot"})
+
+    assert recorded["timeout"] == (5, 60)
+
+
+def test_make_request_sender_allows_overriding_the_timeout(monkeypatch):
+    """Test that a per-request timeout wins over the bound default.
+
+    GIVEN: a sender built with a default timeout
+    WHEN: a request supplies its own timeout
+    THEN: the per-request timeout is used
+    """
+    recorded = {}
+
+    def fake_post(url, **kwargs):
+        recorded.update(kwargs)
+        return _FakeResponse(payload={"data": {}})
+
+    monkeypatch.setattr(http.requests, "post", fake_post)
+    sender = http.make_request_sender("http://robot:31950", "*",
+                                      timeout=(5, 60))
+
+    sender(endpoint="/robot/home", method="POST", data={"target": "robot"},
+           timeout=(10, 120))
+
+    assert recorded["timeout"] == (10, 120)
+
+
+def test_make_request_sender_without_a_timeout_sends_none(monkeypatch):
+    """Test that a sender without a default timeout sends no timeout.
+
+    GIVEN: a sender built without a default timeout
+    WHEN: a request is sent
+    THEN: requests receives no timeout (the old, unbounded behaviour)
+    """
+    recorded = {}
+
+    def fake_post(url, **kwargs):
+        recorded.update(kwargs)
+        return _FakeResponse(payload={"data": {}})
+
+    monkeypatch.setattr(http.requests, "post", fake_post)
+    sender = http.make_request_sender("http://robot:31950", "*")
+
+    sender(endpoint="/robot/home", method="POST", data={"target": "robot"})
+
+    assert "timeout" not in recorded
