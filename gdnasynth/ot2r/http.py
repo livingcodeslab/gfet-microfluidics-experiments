@@ -1,5 +1,4 @@
 """Interact with the Opentrons OT-2R via the HTTP API"""
-from functools import partial
 from typing import Any, Protocol, Sequence
 from urllib.parse import urljoin
 
@@ -74,7 +73,9 @@ class RequestSender(Protocol):
 
 
 def make_request_sender(
-        robot_address: str, opentrons_version: OpentronsVersion
+        robot_address: str,
+        opentrons_version: OpentronsVersion,
+        timeout: Any = None
 ) -> RequestSender:
     """Bind connection details into a RequestSender.
 
@@ -82,13 +83,23 @@ def make_request_sender(
     :type robot_address: str
     :param opentrons_version: The Opentrons API version to use.
     :type opentrons_version: gdnasynth.ot2r.commands.types.OpentronsVersion
+    :param timeout: A default `requests` timeout for every request: a number of
+        seconds or a ``(connect, read)`` tuple. Without one, a stalled
+        connection blocks the caller indefinitely. An individual request can
+        still override it with ``timeout=...``.
+    :type timeout: Any, optional
 
     :rtype gdnasynth.ot2r.http.RequestSender
     """
-    return partial(
-        send_request,
-        robot_address=robot_address,
-        opentrons_version=opentrons_version)
+    def sender(endpoint, method, data, **kwargs):
+        if timeout is not None:
+            kwargs.setdefault("timeout", timeout)
+        return send_request(
+            robot_address=robot_address,
+            opentrons_version=opentrons_version,
+            endpoint=endpoint, method=method, data=data, **kwargs)
+
+    return sender
 
 
 def _response_error(response: requests.Response) -> RobotResponseError:
