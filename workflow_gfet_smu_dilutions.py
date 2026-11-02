@@ -329,9 +329,15 @@ def scan_commands(sender, run, start=0):
     """
     index = start
     command, total = command_page(sender, run, index)
-    while command is not None and command.get("status") == "succeeded":
+    while (index < total and command is not None
+           and command.get("status") == "succeeded"):
         index += 1
         command, total = command_page(sender, run, index)
+    if index >= total:
+        # A `cursor` past the end of the list clamps to the last command, so
+        # stop explicitly instead of walking past it forever: without this the
+        # loop never returns once every command has succeeded.
+        return total, total, None
     return index, total, command
 
 
