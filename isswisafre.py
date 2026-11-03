@@ -19,6 +19,7 @@ from argparse import Namespace, ArgumentParser, ArgumentDefaultsHelpFormatter
 import serial
 from keithley2600 import Keithley2600
 
+from gdnasynth.graphenea import stabilise_chip
 from gdnasynth.generic import float_range
 from gdnasynth.logging import setup_logging
 from gdnasynth.keithley import initialise_smu
@@ -119,6 +120,7 @@ def run_experiment(args: Namespace) -> int:
     """Run the experiment."""
     # init mfd, smu, ...
     smu = initialise_smu(args.smu_visa_address, args.line_frequency, args.nplc)
+    stabilise_chip(smu)
     mfd = serial.Serial(args.microfluidics_serial_port)
     # init channels
     _pattern = (

@@ -33,6 +33,7 @@ from pathlib import Path
 
 from isswisafre import take_reading
 
+from gdnasynth.graphenea import stabilise_chip
 from gdnasynth.generic import float_range
 from gdnasynth.keithley import initialise_smu
 from gdnasynth.logging import setup_logging
@@ -122,7 +123,7 @@ def home_robot(sender):
 
 
 def preflight_smu():
-    """Initialise the SMU (this also stabilises it)."""
+    """Initialise the SMU (chip stabilisation happens once per chip)."""
     return initialise_smu(SMU_VISA_ADDRESS, SMU_LINE_FREQUENCY, SMU_NPLC)
 
 
@@ -259,6 +260,7 @@ def run_workflow(sender, smu, written):
             wait_until_paused(sender, run)
 
             prompt_multiplexer(chip, well)
+            stabilise_chip(smu)
             readings = list(sweep_readings(smu))
             path = output_path(well)
             write_readings(path, readings)

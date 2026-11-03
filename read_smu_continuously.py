@@ -4,6 +4,7 @@ import logging
 import argparse
 from pathlib import Path
 
+from gdnasynth.graphenea import stabilise_chip
 from gdnasynth.keithley import initialise_smu
 from gdnasynth.cli.options import cli_add_smu_args, cli_add_logging_arg
 
@@ -42,6 +43,7 @@ def read_values(
     """Read the values."""
     logger.info("Initialising the device.")
     smu = initialise_smu(visa_address, line_frequency, nplc)
+    stabilise_chip(smu)
 
     # set Operation points
     logger.debug("Setting up the operating points.")

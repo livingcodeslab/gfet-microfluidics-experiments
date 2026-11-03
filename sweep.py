@@ -6,6 +6,7 @@ from argparse import Namespace, ArgumentParser, ArgumentDefaultsHelpFormatter
 
 from keithley2600 import Keithley2600
 
+from gdnasynth.graphenea import stabilise_chip
 from gdnasynth.generic import float_range
 from gdnasynth.logging import setup_logging
 from gdnasynth.keithley import initialise_smu
@@ -45,11 +46,13 @@ def run_sweep(args: Namespace) -> int:
                     "measured_gate_voltage",
                     "measured_gate_current"))
     writer.writeheader()
+    smu = initialise_smu(args.smu_visa_address,
+                         args.line_frequency,
+                         args.nplc,
+                         raise_keithley_errors=args.raise_keithley_errors)
+    stabilise_chip(smu)
     for row in sweep(
-            initialise_smu(args.smu_visa_address,
-                           args.line_frequency,
-                           args.nplc,
-                           raise_keithley_errors=args.raise_keithley_errors),
+            smu,
             tuple(float_range(
                 -abs(args.gate_voltage),
                 abs(args.gate_voltage),

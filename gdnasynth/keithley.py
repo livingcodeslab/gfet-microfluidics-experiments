@@ -47,19 +47,6 @@ def connect(
     return inst
 
 
-def device_stabilisation(inst: Keithley2600):
-    """Stabilise device."""
-    logger.info("=== Device stabilisation ===")
-    inst.apply_voltage(inst.smua, 0.3)
-    inst.apply_voltage(inst.smub, 0.5)
-    for _ in range(0, 3):
-        inst.measure_voltage(inst.smua)
-        inst.measure_current(inst.smua)
-        inst.measure_voltage(inst.smub)
-        inst.measure_current(inst.smub)
-    logger.info("============================")
-
-
 def initialise_smu(
         visa_address: str,
         line_frequency: int,
@@ -78,7 +65,6 @@ def initialise_smu(
     smu.smub.source.func = smu.smub.OUTPUT_DCVOLTS
     smu.smua.source.limiti = 0.1
     smu.smub.source.limiti = 0.1
-    device_stabilisation(smu)
     smu.smua.source.output = smu.smua.OUTPUT_OFF
     smu.smub.source.output = smu.smub.OUTPUT_OFF
 
