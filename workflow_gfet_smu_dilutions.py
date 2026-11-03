@@ -410,8 +410,9 @@ def prompt_multiplexer(chip):
 
 def sweep_readings(smu):
     """Yield one SMU reading per (gate, channel) voltage point."""
-    gate_voltages = tuple(float_range(
-        -GATE_SWEEP_VOLTAGE, GATE_SWEEP_VOLTAGE, GATE_SWEEP_STEP))
+    gate_voltages = tuple(float_range(-GATE_SWEEP_VOLTAGE,
+                                      GATE_SWEEP_VOLTAGE + GATE_SWEEP_STEP,
+                                      GATE_SWEEP_STEP))
     for gate_voltage in gate_voltages:
         for channel_voltage in CHANNEL_VOLTAGES:
             yield take_reading(smu, gate_voltage, channel_voltage)
