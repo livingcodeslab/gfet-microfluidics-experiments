@@ -50,12 +50,17 @@ runs.
 
 - The engine **always homes on normal-run `play`**, independent of the queued
   commands — a no-motion `comment` jams identically.
-- **Jam signature:** if the X axis starts at its hard stop, homing overshoots:
-  `Out of bounds move: X=(418.00000000000006 motor controller, 419.5668849660084
-  deck) too high for limit 418.0` → `SmoothieAlarm: ALARM: Kill button pressed -
+- **Jam signature:** homing halts — `SmoothieAlarm: ALARM: Kill button pressed -
   reset or M999` → halt → `M999` → halt loop
-  (`WARNING: After HALT you should HOME as position is currently unknown`).
-  Moving the axes *off* the stop usually clears it.
+  (`WARNING: After HALT you should HOME as position is currently unknown`), and
+  the run stops progressing.
+- **Careful with `Out of bounds move: X=(418.0 motor controller, 419.57 deck) too
+  high for limit 418.0`.** It is **also emitted routinely during a normal X
+  homing** — 127 occurrences between 2026-09-09 and 2026-11-03, including the
+  successful 2026-11-02 run. X homes to `418.0` motor mm, and the `+1.57` mm
+  calibration offset maps that to a deck coordinate just past the 418.0 limit. So
+  the line **alone is not evidence of a jam**; on 2026-10-19 it merely coincided
+  with one, which is how we first read it.
 - **2026-10-19 recurrence:** after a power cycle the axes were "off the stops"
   but X was still at `418.0`, so homing halted again (`Recovering from halt`,
   `Homing axes XYZAXZA in sequence ['AZ','X','Y']`) with empty
@@ -121,8 +126,12 @@ States from which the **only** recovery was a power cycle:
 Related firmware observation (possible bug in its own right): homing overshoots
 when the X axis starts at its hard stop
 (`Out of bounds move: X=(418.0 …) too high for limit 418.0` →
-`ALARM: Kill button pressed`). Present in `api.log` back to 2026-09-15. Workaround:
-start with X mid-travel.
+`ALARM: Kill button pressed`). Workaround: start with X mid-travel.
+
+**Caveat (2026-11-03):** that `Out of bounds move` line is emitted routinely
+during X homing (X homes to 418.0 motor mm, which the +1.57 mm calibration offset
+maps just past the deck limit), so its presence alone is not evidence of an
+overshoot — the halt and the lack of progress are.
 
 ## 7. Practical rules distilled
 
@@ -149,7 +158,9 @@ start with X mid-travel.
   are found and `Homing axes ZA` completes. `robot_settings.json` /
   `deck_calibration.json` "not found. Loading defaults" is **normal on this
   robot** (seen on 35 earlier boots) — not a lost calibration.
-- **`Out of bounds move: X=… too high for limit 418.0` at `play` recurs whenever
-  X sits at its hard stop** (again on 2026-11-03, immediately after
-  `Homing axes XYZAXZA`). Move the X carriage to roughly mid-travel before
-  starting a run.
+- **Do not read `Out of bounds move: X=… too high for limit 418.0` as a jam.** It
+  is logged on routine X homing (X homes to 418.0 motor mm; the +1.57 mm
+  calibration offset pushes the deck coordinate just past the 418.0 limit). A
+  real jam adds the halt (`ALARM: Kill button pressed`, `M999`, `Homing fail`)
+  and the run stops progressing; the recovery is to move X to mid-travel (or
+  power-cycle).
