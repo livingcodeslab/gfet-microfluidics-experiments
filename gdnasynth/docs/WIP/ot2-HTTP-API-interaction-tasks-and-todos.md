@@ -45,6 +45,10 @@ Progress and backlog for the low-level `gdnasynth.ot2r` client. Design in
 - **2026-10-27:** removed `Configuration`, `ConfigurationException` and
   `buildconfig.py`; renamed `LabwareConfig` → `Labware`, `PipetteConfig` →
   `Pipette`.
+- **2026-11-02:** `list_commands` follows the commands-endpoint pagination
+  (`pageLength` / `cursor`, `meta.totalLength`); the endpoint's out-of-range
+  `cursor` clamping is recorded in the implementation notes. `make_request_sender`
+  can now bind a default request timeout.
 
 ## Outstanding (priority order)
 

@@ -148,6 +148,24 @@ Test suite: 71 tests passing, `mypy` clean at HEAD `cd46e8e` (2026-10-19).
   aspirate and dispense; `bottom` is `z`, and any `offset` is added on top of
   the chosen origin. A wrong `z`/`depth` therefore shows up as the tip pressing
   on, or floating above, the labware.
+- **The commands list paginates, and `cursor` clamps.** `GET
+  /runs/{runId}/commands` takes `pageLength` (default **20**) and `cursor` (the
+  *starting* index), and returns `meta.cursor` / `meta.totalLength`. A `cursor`
+  past the end **clamps to the last command** (verified 2026-11-02: on a
+  498-command run, `cursor=497`, `498` and `499` all return the same last
+  command). A client that walks forward one command at a time must stop at
+  `totalLength`, otherwise it loops forever. `list_commands` does this correctly.
+- **An unreachable robot fails fast once a timeout is bound.** With
+  `make_request_sender(timeout=(10, 60))`, powering the robot off mid-run raised
+  `RobotUnreachable` after ~10 s (the connect timeout) — including in the
+  cleanup's `stop`/`delete` calls — instead of hanging. Without a bound timeout
+  the same request blocks indefinitely.
+- **An unclean power-off leaves a hollow run record.** A run that was executing
+  when the robot lost power comes back as `stopped` with `startedAt: None`,
+  `completedAt: None` and **no commands at all** (2026-11-03: a run that had
+  demonstrably picked up a tip returned `0` commands). The API therefore cannot
+  tell how far such a run got — use `/logs/api.log` and `/logs/serial.log` for
+  the post-mortem.
 
 ## 5. Shipped-surface conflicts and known gaps
 

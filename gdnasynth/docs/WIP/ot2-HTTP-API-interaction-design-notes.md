@@ -78,6 +78,13 @@ readability once call sites are known.
 be redesigned when the setup and orchestration code is written; the `sender`
 remains the connection seam.
 
+**Request timeouts are the caller's choice (2026-11-02).** `send_request` sends
+`data` verbatim and applies **no** timeout of its own — an unbounded request
+blocks forever, which a polling controller cannot even detect. Instead,
+`make_request_sender(..., timeout=...)` binds a default for every request and a
+per-request `timeout=` still overrides it. There is deliberately no hidden global
+default: the connection policy belongs to whoever builds the sender.
+
 ## 3. Type design
 
 ### Runtime-checked "new" string types
