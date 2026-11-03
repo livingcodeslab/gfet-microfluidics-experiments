@@ -151,7 +151,7 @@ WASH_MIX_CYCLES = 3
 
 # --- SMU sweep ---------------------------------------------------------------
 GATE_SWEEP_VOLTAGE = 1.5  # sweep from -this to +this
-GATE_SWEEP_STEP = 0.1
+GATE_SWEEP_STEP = 0.01
 CHANNEL_VOLTAGES = (0.05, -0.05)
 READING_FIELDS = (
     "timestamp",
