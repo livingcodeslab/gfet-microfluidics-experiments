@@ -63,7 +63,7 @@ ROBOT_URI = "http://OT2CEP20221010R03:31950"
 REQUEST_TIMEOUT_SECONDS = (10, 60)
 SMU_VISA_ADDRESS = "ASRL/dev/ttyUSB0::INSTR"  # <- set for your SMU
 SMU_LINE_FREQUENCY = 60  # Hz
-SMU_NPLC = 6.75025
+SMU_NPLC = 12.5005
 
 # --- deck --------------------------------------------------------------------
 DEFINITION = Path("OT2_labware_definition_graphenea_card.json")
