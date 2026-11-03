@@ -137,7 +137,7 @@ class Reagent:
 REAGENTS = (
     Reagent("water", RESERVOIR, WATER_WELL),
     Reagent("0p0005PBS", DILUTION_PLATE, "A5"),
-    Reagent("00p1PBS", DILUTION_PLATE, "A4"),
+    Reagent("0p001PBS", DILUTION_PLATE, "A4"),
 )
 
 # --- acquisition -------------------------------------------------------------
