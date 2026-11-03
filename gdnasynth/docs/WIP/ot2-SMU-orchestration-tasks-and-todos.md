@@ -4,6 +4,21 @@ Docket and backlog for the orchestration layer. Design in
 `ot2-SMU-orchestration-design-notes.md`; current state in
 `ot2-SMU-orchestration-implementation-notes.md`.
 
+## Next session — do these first (2026-11-02)
+
+- [x] **Confirm the fail-fast** (2026-11-03, twice): turning the robot off
+      mid-run raised `RobotUnreachable` within ~10 s (the sender's connect
+      timeout), and the cleanup's `stop`/`delete` failed fast too. The second
+      test had genuine motion in progress (a tip had been picked), so the real
+      case is covered.
+- [x] **Leftover runs after the fail-fast** (2026-11-03): both came back
+      `stopped` and were deleted. Do **not** read `startedAt: None` as "never
+      ran": an unclean power-off also erases the timestamps *and the commands*
+      (see the HTTP implementation notes). The second run had demonstrably
+      moved the arm yet reported `0` commands.
+- [ ] Re-run with the full ±1.5 V gate sweep (`GATE_SWEEP_VOLTAGE = 1.5`; the
+      chip's absolute maximum — never exceed it).
+
 ## Docket (proposed order, 2026-10-23)
 
 Smallest-useful-first; each new function tests-first (test patch, then impl

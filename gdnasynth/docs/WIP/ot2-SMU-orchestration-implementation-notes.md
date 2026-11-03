@@ -49,6 +49,37 @@ with HTTP-enqueued command sequencing, so **not** the chosen route.
 Note: the engine inserts a `home` command on run start, which is why it appears
 in command lists.
 
+### 1.4 The 3-reagent dilution workflow (first full run, 2026-11-02)
+
+`workflow_gfet_smu_dilutions.py` (tracked at the repo root) dilutes 1X PBS to
+0.1X / 0.01X / 0.001X / 0.0005X in a `corning_96_wellplate_330ul`, then for each
+of two chips acquires all three reagents (water, 0.0005X, 0.001X), washing the
+chip between them.
+
+Run `a440881b-0d6f-499e-8970-786a6bb9ac16`: created 18:06:16, started 18:06:44,
+**completed 18:38:59** (~32 min); **498 commands, all succeeded**, no errors, no
+error recovery. Six CSVs were written, sharing one random suffix.
+
+Verified on hardware: the dilution barrier, `home(axes=["leftZ"])` /
+`retract_pipettes`, the wash (5 cycles × 3 mixes), the mux prompt once per chip,
+and the `…-chip-N-…` filenames.
+
+**Gate sweep.** `GATE_SWEEP_VOLTAGE = 1.5` — the chip's **absolute maximum
+rating**, never exceed it — with `GATE_SWEEP_STEP = 0.1`. The sweep runs from
+−1.5 V to +1.5 V **inclusive**, i.e. `float_range(-v, v + step, step)` (without
+the `+ step` it stops at −0.1 from the top).
+
+Two client-side defects surfaced and were fixed:
+
+- **The command scan looped forever once every command had succeeded.** A
+  `cursor` past the end clamps to the last command (see the HTTP implementation
+  notes), so "advance while succeeded" never terminated and the run status was
+  never read — the script hung after the run had actually finished. Fixed by
+  stopping at `totalLength`.
+- **No request timeout.** `send_request` is unbounded unless a timeout is bound;
+  the script now builds its sender with `timeout=(10, 60)` (homing keeps
+  `(10, 120)`).
+
 ## 2. Existing reusable SMU / device code (inventory)
 
 The repository already has acquisition and CSV-writing code to reuse
