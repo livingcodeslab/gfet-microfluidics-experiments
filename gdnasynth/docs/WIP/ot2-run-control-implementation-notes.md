@@ -133,3 +133,23 @@ start with X mid-travel.
 - Do not treat `succeeded` as proof of completion for protocol-linked runs;
   list commands and check statuses.
 - Prefer non-protocol normal runs when commands are enqueued over HTTP.
+- **A Smoothie halt surfaces as `SmoothieAlarm: error:Alarm lock`.** 2026-10-30:
+  a run halted mid-plunger-move (an `M400` never returned, the next command got
+  `error:Alarm lock`, then `M999` → "After HALT you should HOME"); the engine
+  marked the running command `failed` with `RunStoppedError: Run was cancelled`.
+  The cause is unknown (possibly the kill button) and it did not recur on
+  2026-11-02. `/logs/serial.log` is where the halt shows up.
+- **A robot lost mid-run leaves the run active.** The client cannot stop or
+  delete it while unreachable; once the robot is back, `stop` and `delete` that
+  run before starting another — the power loss may also have left it wedged
+  (see §6).
+- **After an unclean shutdown the front LED can blink and never settle.** A
+  forced power-off (hold the button) followed by a power-on clears it. The boot
+  itself is healthy: the motor controller and Smoothie connect, the instruments
+  are found and `Homing axes ZA` completes. `robot_settings.json` /
+  `deck_calibration.json` "not found. Loading defaults" is **normal on this
+  robot** (seen on 35 earlier boots) — not a lost calibration.
+- **`Out of bounds move: X=… too high for limit 418.0` at `play` recurs whenever
+  X sits at its hard stop** (again on 2026-11-03, immediately after
+  `Homing axes XYZAXZA`). Move the X carriage to roughly mid-travel before
+  starting a run.
