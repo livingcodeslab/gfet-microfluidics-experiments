@@ -12,7 +12,7 @@ def float_range(
         high: Union[int, float],
         step: Union[int, float] = 1
 ) -> Iterator[float]:
-    """Same a `range` but allows floating-point values."""
+    """Same as `range` but allows floating-point values."""
     current = float(low)
     while current < high:
         yield current
