@@ -48,3 +48,10 @@ packages = ["gdnasynth"]
 # them out of the wheel. If documentation that *should* ship is added under
 # `gdnasynth/docs/`, narrow this to `gdnasynth/docs/WIP/**`.
 exclude = ["gdnasynth/docs/WIP/**"]
+
+[tool.mypy]
+disable_error_code = ["import-untyped"]
+
+[[tool.mypy.overrides]]
+module = ["keithley2600.*"]
+ignore_missing_imports = true
