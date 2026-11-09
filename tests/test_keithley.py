@@ -32,6 +32,7 @@ class _FakeKeithley:
         self.raise_keithley_errors = raise_keithley_errors
         self.smua = _Channel("a")
         self.smub = _Channel("b")
+        self.connected = True
         self.localnode = SimpleNamespace(serialno="4616013")
         self.calls = []
         self.integration_times = {}
@@ -51,12 +52,17 @@ class _FakeKeithley:
         self.calls.append(("measure_current", channel.name))
         return 0.0
 
+    def connect(self):
+        """Does nothing, for now."""
+        return False
 
-def _patch_keithley(monkeypatch):
+
+def _patch_keithley(monkeypatch, connected=True):
     created = {}
 
     def fake_keithley(visa_address, raise_keithley_errors=False):
         created["smu"] = _FakeKeithley(visa_address, raise_keithley_errors)
+        created["smu"].connected = connected
         return created["smu"]
 
     monkeypatch.setattr(keithley, "Keithley2600", fake_keithley)
@@ -98,3 +104,21 @@ def test_initialise_smu_does_not_condition_the_chip(monkeypatch):
 
     kinds = {call[0] for call in created["smu"].calls}
     assert kinds == {"set_integration_time"}
+
+
+def test_initialise_smu_raises_when_the_device_does_not_connect(monkeypatch):
+    """Test that a failed connection is reported, not used.
+
+    GIVEN: a Keithley driver that could not connect (``connected`` is False)
+    WHEN: initialise_smu(...) is called
+    THEN: KeithleyIOError is raised, naming the VISA resource
+    """
+    import pytest
+    from keithley2600 import KeithleyIOError
+
+    _patch_keithley(monkeypatch, connected=False)
+
+    with pytest.raises(KeithleyIOError) as excinfo:
+        keithley.initialise_smu("ASRL/dev/ttyUSB0::INSTR", 60, 1.0)
+
+    assert "ASRL/dev/ttyUSB0::INSTR" in str(excinfo.value)
