@@ -4,8 +4,9 @@ The workflow:
 
 1. **Pre-flight** — home the robot, then initialise the SMU (60 Hz mains,
    NPLC 6.75025).
-2. **Set up the run** — upload the custom definition, load the card, tiprack,
-   water reservoir and the 96-well dilution plate, and the p20 pipette.
+2. **Set up the run** — upload the custom definition, load the card, two
+   tipracks (slots 7 and 8), the water reservoir and the 96-well dilution
+   plate, and the p20 pipette.
 3. **Prepare the reagents** — dilute 1X PBS down to 0.1X, 0.01X, 0.001X and
    0.0005X in the dilution plate (18 uL units, 1:10 steps plus one 1:2 step).
 4. **Acquire** — for each chip, then each *reading* (a full pass through the
@@ -81,6 +82,11 @@ CARD = Labware(
 TIPRACK = Labware(
     labware_name="opentrons_96_filtertiprack_20ul", load_slot=7,
     labware_id=uuid.UUID("32dbb5b7-710d-428b-bff0-03e31351e25f"))
+TIPRACK_2 = Labware(
+    labware_name="opentrons_96_filtertiprack_20ul", load_slot=8,
+    labware_id=uuid.UUID("b6f1c0d2-3e4a-4b5c-9d8e-7f6a5b4c3d2e"))
+# Tips are drawn from these racks in order, moving on when one is exhausted.
+TIPRACKS = (TIPRACK, TIPRACK_2)
 RESERVOIR = Labware(
     labware_name="nest_12_reservoir_15ml", load_slot=3,
     labware_id=uuid.UUID("fe305793-e2b6-40ce-94d7-2b55549b1b57"))
@@ -200,17 +206,32 @@ def setup_run(sender):
     print("    run:", run.id)
 
     add_labware_definition(sender, run, DEFINITION)
-    for labware in (CARD, TIPRACK, RESERVOIR, DILUTION_PLATE):
+    for labware in (CARD, TIPRACK, TIPRACK_2, RESERVOIR, DILUTION_PLATE):
         load_labware(sender, run, labware)
     load_pipette(sender, run, PIPETTE)
     return run
 
 
-def tip_wells() -> Iterator[str]:
-    """Yield tiprack wells in row-major order (A1, A2, ..., H12)."""
-    for row in "ABCDEFGH":
-        for column in range(1, 13):
-            yield f"{row}{column}"
+def tip_slots(racks) -> Iterator[tuple[Labware, str]]:
+    """Yield (tiprack, well) pairs, rack by rack, in row-major order."""
+    for rack in racks:
+        for row in "ABCDEFGH":
+            for column in range(1, 13):
+                yield rack, f"{row}{column}"
+
+
+def next_tip(tips) -> tuple[Labware, str]:
+    """Take the next (tiprack, well) pair.
+
+    Raises a clear error when the loaded tipracks are exhausted instead of
+    letting a bare ``StopIteration`` escape.
+    """
+    try:
+        return next(tips)
+    except StopIteration:
+        raise RuntimeError(
+            "ran out of tips: load more tipracks or use fewer readings"
+        ) from None
 
 
 def mix(sender, run, labware, well, volume, cycles, *, dispense_location):
@@ -227,7 +248,7 @@ def prepare_reagents(sender, run, tips):
     print("3. Diluting 1X PBS")
 
     # Water first: one tip re-used for the same source.
-    pick_up_tip(sender, run, PIPETTE, TIPRACK, next(tips))
+    pick_up_tip(sender, run, PIPETTE, *next_tip(tips))
     for well, dispenses in WATER_FOR_DILUTIONS:
         for _ in range(dispenses):
             aspirate(sender, run, PIPETTE, RESERVOIR, WATER_WELL,
@@ -241,7 +262,7 @@ def prepare_reagents(sender, run, tips):
     # Then the serial transfers, each with a fresh tip.
     for target, source, transfers in DILUTION_STEPS:
         print(f"    {source} -> {target} ({transfers} x {DILUTION_UNIT_UL} uL)")
-        pick_up_tip(sender, run, PIPETTE, TIPRACK, next(tips))
+        pick_up_tip(sender, run, PIPETTE, *next_tip(tips))
         for _ in range(transfers):
             aspirate(sender, run, PIPETTE, DILUTION_PLATE, source,
                      DILUTION_UNIT_UL, FLOW_RATE,
@@ -256,7 +277,7 @@ def prepare_reagents(sender, run, tips):
 
 def transfer_to_chip(sender, run, chip_well, reagent, tips):
     """Put one aliquot of a reagent on the chip and retract the pipette."""
-    pick_up_tip(sender, run, PIPETTE, TIPRACK, next(tips))
+    pick_up_tip(sender, run, PIPETTE, *next_tip(tips))
     aspirate(sender, run, PIPETTE, reagent.labware, reagent.well,
              TRANSFER_VOLUME_UL, FLOW_RATE,
              well_location=ASPIRATE_WELL_LOCATION)
@@ -285,7 +306,7 @@ def wash_chip(sender, run, chip_well, tips):
     chip, mixes it `WASH_MIX_CYCLES` times, and removes it to the trash. The
     residue left behind is a thin film diluted towards pure water.
     """
-    pick_up_tip(sender, run, PIPETTE, TIPRACK, next(tips))
+    pick_up_tip(sender, run, PIPETTE, *next_tip(tips))
     for _ in range(WASH_CYCLES):
         aspirate(sender, run, PIPETTE, RESERVOIR, WATER_WELL, WASH_VOLUME_UL,
                  FLOW_RATE, well_location=ASPIRATE_WELL_LOCATION)
@@ -486,7 +507,7 @@ def acquire(sender, run, smu, chip, reagent, reading, randstr, written):
 def run_workflow(sender, smu, written):
     """Run the dilutions and the acquisition loop; return the final state."""
     run = setup_run(sender)
-    tips = tip_wells()
+    tips = tip_slots(TIPRACKS)
     progress = {"index": 0}
     try:
         prepare_reagents(sender, run, tips)
