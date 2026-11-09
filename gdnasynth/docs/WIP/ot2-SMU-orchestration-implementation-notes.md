@@ -129,3 +129,40 @@ inventing a format.
   run; keep it runnable from the repo root (`PYTHONPATH=.`).
 - `demo_maintenance_run.py` (repo root) — the failing protocol variant; useful
   as a regression/illustration of the short-circuit.
+
+## 5. SMU connection notes (2026-11-09)
+
+- **Symptom.** `initialise_smu(...)` fails with
+  `KeithleyIOError: Could not connect to the Source-Measure Unit at
+  ASRL/dev/ttyUSB0::INSTR even with 10 attempts.` while
+  `pyvisa.ResourceManager().list_resources()` *does* list
+  `('ASRL/dev/ttyUSB0::INSTR',)` — i.e. the device is enumerated but cannot be
+  opened.
+- **Cause found: the user was not in the `dialout` group**, so opening the
+  serial port was denied. **Fix:** `sudo usermod -aG dialout <user>`, then
+  **log out and back in** (group membership is per-session); verify with
+  `groups`.
+- **Why the error is opaque.** The `keithley2600` driver's `connect()` catches
+  everything except `ValueError` and only logs
+  `"Could not connect to Keithley at %s."` — the real `VisaIOError` /
+  `SerialException` (with the errno) is discarded. To see it, bypass the driver:
+
+  ```python
+  import traceback, pyvisa
+  try:
+      res = pyvisa.ResourceManager().open_resource("ASRL/dev/ttyUSB0::INSTR")
+      print(res.query("*IDN?"))     # is it really the SMU?
+  except Exception:
+      traceback.print_exc()
+  ```
+
+  `serial.Serial("/dev/ttyUSB0")` names the errno directly, and setting the
+  `pyvisa` / `serial` loggers to DEBUG shows the attempt. Typical outcomes:
+  `[Errno 13] Permission denied` (group), `[Errno 16] Device or resource busy`
+  (stale process, or `brltty`/`ModemManager` holding the FTDI device), or a
+  timeout on `*IDN?` (wrong `/dev/ttyUSB*`, e.g. the microfluidics adapter —
+  check `udevadm info -q property -n /dev/ttyUSB0` or unplug it).
+- **Retrying is futile for these.** The current `connect()` retries 10× at 0.5 s
+  and logs at INFO. Worth probing once and classifying: raise immediately (with
+  `raise ... from error`) on `PermissionError`/busy, and retry only genuinely
+  transient failures. **Not implemented yet.**
