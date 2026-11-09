@@ -21,7 +21,7 @@ cd gfet-microfluidics-experiments
 acquire a guix shell
 
 ```sh
-guix shell --load-path="$(pwd)/.guix" --container --network --development --file=guix.scm
+guix shell --load-path="$(pwd)/.guix" --container --network --development --file=guix.scm --expose=/dev/ttyUSB0
 ```
 
 run tests with
