@@ -30,7 +30,8 @@
            python-pytest
            python-typing-extensions))
     (propagated-inputs
-     (list python-requests
+     (list python-pyvisa
+           python-requests
            python-pyserial
            python-py-gnuplot
            python-keithley2600))
