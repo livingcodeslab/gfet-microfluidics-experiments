@@ -181,7 +181,74 @@ config binding (reagent → reservoir/well, pipette, flow rate, tip policy),
 3. Keep the vocabulary distinct — *operations/actions* vs *steps* — so we do not
    drift back into conflating them.
 
-## 6. Open questions
+## 6. Devices as registered, self-describing participants (2026-11-03)
+
+Working from the two real scripts (`workflow_gfet_smu.py` and
+`workflow_gfet_smu_dilutions.py`) makes the devices' differences obvious: the
+OT-2R takes a queue and runs it asynchronously (pausing only at
+`waitForResume`), the SMU is synchronous and returns data, the multiplexer is
+currently a human being, and a status display would run concurrently and never
+block.
+
+If the orchestrator knows those behaviours it becomes coupled to every device and
+is no longer extensible. Therefore:
+
+- **The orchestrator knows sequences and boundaries, not behaviours.** Its input
+  is *what happens, in what order*, and *where one device hands over to another*
+  (the boundary points at which each device is activated).
+- **Devices register themselves** with the orchestrator, and each supplies
+  whatever the orchestrator needs to decide whether to trigger it — or whether
+  another device has to act first.
+- **"Device" is deliberately abstract**: the same mechanism must cope with a
+  human multiplexer today and an automated one later, with a status display / UI
+  that may run concurrently and never pause, and with data sinks.
+- **Swapping a human for hardware must be a local change.** Replacing the
+  operator prompt with an automated multiplexer should mean implementing that
+  device, not editing the orchestrator.
+
+### Settled (2026-11-03)
+
+- **The device → orchestrator currency is *events*.** A device emits events — for
+  example the OT-2R emits "entered pause" / "paused" when it pauses for data
+  acquisition — and the orchestrator combines those with the sequencing/context
+  information it already has to decide what to trigger next. Devices stay
+  **ignorant of each other**: no device names another, and there are no readiness
+  predicates or dependency graphs between devices.
+- **The sequence is authored outside the devices** — by a workflow script (not
+  necessarily Python), which may itself be generated from a user interface
+  (graphical or otherwise). The orchestrator executes that sequence and its
+  boundaries and reacts to events; devices do not negotiate ordering.
+- **The human multiplexer is a registered device now**, whose activation blocks
+  until acknowledged: the SMU must not run until the mux has selected the
+  appropriate chip. That ordering is expressed by the sequence plus the mux's
+  events — the SMU does not know the mux exists.
+
+### Still open (2026-11-03)
+
+1. **What is a boundary, precisely?** "The OT-2R reached its pause", "the mux
+   confirmed chip *n*" and "the SMU finished a sweep" are all valid boundaries
+   yet quite different things (an engine state, an acknowledgement, a
+   completion). Does the orchestrator model them uniformly (all as events), or
+   does it need a distinct notion — condition/barrier — for some?
+   **Needs its own exploration.**
+2. **What is the event vocabulary?** A small fixed set (`paused`, `ready`,
+   `completed`, `failed`, …) shared by every device, or free-form per device? How
+   does a workflow refer to an event of a device it knows nothing about?
+3. **Concurrency: inline vs background devices.** A status display "never pauses
+   or waits". Is that a property the device declares, something the workflow
+   marks, or a separate notion of *observer* devices the orchestrator starts and
+   never blocks on? **Unclear; capture for exploration.**
+4. **Cross-device state.** Each device owns its own state; does any device need
+   to read another's at a boundary? Devices being ignorant of each other argues
+   against it — perhaps data only travels through the orchestrator.
+5. **Failure at a boundary.** Does the device self-recover and emit an event, or
+   does the orchestrator apply a recovery policy?
+6. **Smallest worthwhile slice.** With two scripts in hand: an event vocabulary
+   plus a `Device` protocol (activate / emit) and a registry, re-driving
+   `workflow_gfet_smu_dilutions.py` from it? Or start with the event plumbing
+   around the pause, which is the pivot of the whole workflow?
+
+## 7. Open questions
 
 - [ ] Where does the orchestration live and what is it called? Candidates:
       `gdnasynth/orchestration/` (a layer above `ot2r`) vs
