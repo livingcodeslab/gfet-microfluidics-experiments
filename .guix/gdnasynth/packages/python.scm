@@ -1,6 +1,7 @@
 (define-module (gdnasynth packages python)
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
 
   #:use-module (gnu packages python-build)
