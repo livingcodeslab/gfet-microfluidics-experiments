@@ -443,9 +443,17 @@ failure; the run-control/orchestration layer decides what to show.
 
 ### Other devices (when we bring them in)
 
-- **SMU**: pre-flight is `gdnasynth.keithley.initialise_smu(...)` plus
-  `gdnasynth.keithley.device_stabilisation(...)` (logging aside). To be written
-  up when the SMU joins the workflow.
+- **SMU**: pre-flight is `gdnasynth.keithley.initialise_smu(...)` — it only
+  prepares the instrument (integration time, DC voltage source, compliance,
+  outputs left off). **Chip conditioning is a separate concern**:
+  `gdnasynth.chip.stabilise_chip(smu, gate_voltage=0.3,
+  channel_voltage=0.5, readings=3)` is about the Graphenea chip, not the SMU,
+  and is called **once per chip**, after the measurement path is connected to
+  it (in the workflow scripts: right after the multiplexer switches to that
+  chip). Split out of `initialise_smu` on 2026-11-03; `sweep.py`,
+  `isswisafre.py` and `read_smu_continuously.py` now call it explicitly, and
+  `fluid_detection.py`'s standalone `initialise-source-measure-unit` no longer
+  conditions a chip (it has none).
 - Serial microfluidics device: out of scope for now.
 
 
@@ -471,5 +479,7 @@ failure; the run-control/orchestration layer decides what to show.
 - [ ] Whether `/robot/move`-based safe positioning is worth using before `play`.
 - [ ] **Tip type tracking** (see §4): track the tip type — or the source
       rack/well — so a tip is never returned to a rack of a different tip type.
-- [ ] SMU pre-flight: document `gdnasynth.keithley.initialise_smu` /
-      `device_stabilisation` when the SMU joins the workflow.
+- [ ] SMU pre-flight: `initialise_smu` is the SMU half, `stabilise_chip` the
+      per-chip half. Also consider having `operating_points_selection.py` and
+      `gfet_characteristics.py` reuse `stabilise_chip` — they still open-code
+      their own stabilisation loop.
