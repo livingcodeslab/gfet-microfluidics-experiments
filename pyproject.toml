@@ -1,0 +1,50 @@
+# Packaging metadata for `gdnasynth`.
+#
+# The dependency lists below mirror `guix.scm` (a symlink to
+# `.guix/gdnasynth.scm`). Guix cannot read pyproject.toml, so the two lists are
+# maintained by hand -- keep them in sync.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gdnasynth"
+version = "0.1.0"
+description = "Guided DNA Synthesis experiments and projects"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+
+# Runtime dependencies -- mirror `propagated-inputs` in guix.scm.
+dependencies = [
+    "keithley2600",
+    "py-gnuplot",
+    "pyserial",
+    "pyvisa",
+    "requests",
+]
+
+[project.optional-dependencies]
+# Development/test dependencies -- mirror `native-inputs` in guix.scm.
+# `typing-extensions` is required by mypy, not by this code.
+dev = [
+    "mypy",
+    "pylint",
+    "pytest",
+    "typing-extensions",
+]
+
+[project.urls]
+Homepage = "https://github.com/livingcodeslab/gfet-microfluidics-experiments"
+
+[tool.hatch.build.targets.wheel]
+# Ship the whole `gdnasynth` package, including the non-Python files inside it
+# (e.g. the bundled labware definitions). Hatchling includes package data
+# automatically, so there is no `package-data` table to keep up to date.
+packages = ["gdnasynth"]
+# The WIP notes live inside the package directory but are repository-only: keep
+# them out of the wheel. If documentation that *should* ship is added under
+# `gdnasynth/docs/`, narrow this to `gdnasynth/docs/WIP/**`.
+exclude = ["gdnasynth/docs/WIP/**"]

@@ -28,6 +28,7 @@
      (list python-mypy
            python-pylint
            python-pytest
+           python-hatchling
            python-typing-extensions))
     (propagated-inputs
      (list python-pyvisa
