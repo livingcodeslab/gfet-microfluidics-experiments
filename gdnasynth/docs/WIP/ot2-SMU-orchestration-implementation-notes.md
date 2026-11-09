@@ -80,6 +80,18 @@ Two client-side defects surfaced and were fixed:
   the script now builds its sender with `timeout=(10, 60)` (homing keeps
   `(10, 120)`).
 
+**2026-11-03 runs.** A second full run
+(`ce2309cc-8262-41cc-a99f-822881caf99c`) completed `SUCCEEDED` with no hang:
+6 acquisitions × **62 readings**, one CSV each. SMU settings for it:
+`SMU_NPLC = 12.5005` with `GATE_SWEEP_STEP = 0.1` (31 gate points × 2 channel
+voltages). Dropping to `GATE_SWEEP_STEP = 0.01` gives 301 gate points → 602
+readings per file; at NPLC 12.5005 (integration ≈ 0.21 s) that is roughly
+8 minutes per sweep, i.e. ~50 minutes of sweeping for the six acquisitions.
+
+Post-processing happens **outside** the script: each CSV gains
+`<base>-positive.csv` / `<base>-negative.csv` champion splits and an
+`<base>.svg` plot, so one acquisition yields four artefacts (24 for the run).
+
 ## 2. Existing reusable SMU / device code (inventory)
 
 The repository already has acquisition and CSV-writing code to reuse
