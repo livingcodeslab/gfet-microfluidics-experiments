@@ -26,25 +26,28 @@ def select_visa_address() -> str:
 def connect(
         visa_address: str,
         retries: int = 10,
-        seconds_between_retries: float = 0.5
+        seconds_between_retries: float = 0.5,
+        raise_keithley_errors: bool = False
 ) -> Keithley2600:
     """Connect to a Keithley2600 device via the LAN cable."""
     # The constructor calls the `connect()` function
-    inst = Keithley2600(visa_address, raise_keithley_errors=True)
-    retry = 2
-    while not inst.connected:
-        if retry > retries:
-            raise KeithleyIOError(
-                f"Failed to connect to Keithley after {retries} attempts.")
-            break
-        logger.info(f"Connection attempt {retry}")
+    inst = Keithley2600(visa_address,
+                        raise_keithley_errors=raise_keithley_errors)
+    if inst.connected:
+        return inst
+
+    for retry in range(1, retries+1):
+        logger.info(f"Connection attempt {retry}/{retries}")
         if inst.connect():
             return inst
-        logger.info("Could not connect to instrument; retrying…")
         time.sleep(seconds_between_retries)
-        retry = retry + 1
 
-    return inst
+    raise KeithleyIOError(
+        "Could not connect to the Source-Measure Unit at "
+        f"{visa_address} even with {retries} attempts. "
+        "Check the VISA resource (pyvisa.ResourceManager()"
+        ".list_resources()), the device permissions, and that the "
+        "instrument is powered on.")
 
 
 def initialise_smu(
@@ -54,8 +57,7 @@ def initialise_smu(
         raise_keithley_errors: bool = False
 ) -> Keithley2600:
     """Initialize the Source-Measure Unit device."""
-    smu = Keithley2600(visa_address,
-                       raise_keithley_errors=raise_keithley_errors)
+    smu = connect(visa_address, raise_keithley_errors=raise_keithley_errors)
     logger.info("Keithley 2602B SMU Serial Number: %s", smu.localnode.serialno)
 
     _int_time_ = __integration_time__(line_frequency, nplc)
