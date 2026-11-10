@@ -55,7 +55,7 @@ def connect(
         seconds_between_retries: float = 0.5,
         raise_keithley_errors: bool = False
 ) -> Keithley2600:
-    """Connect to a Keithley2600 device via the LAN cable."""
+    """Connect to a Keithley2600 device via the given VISA address."""
     _probe_keithley(visa_address)
     inst = Keithley2600(visa_address,
                         raise_keithley_errors=raise_keithley_errors)
