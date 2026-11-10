@@ -10,10 +10,8 @@ from gdnasynth.graphenea import stabilise_chip
 from gdnasynth.generic import float_range
 from gdnasynth.logging import setup_logging
 from gdnasynth.keithley import initialise_smu
+from gdnasynth.cli.validators import make_value_range_checker
 from gdnasynth.cli.options import cli_add_smu_args, cli_add_logging_arg
-from gdnasynth.cli.validators import (
-    fetch_range_float,
-    make_value_range_checker)
 
 from isswisafre import take_reading
 
@@ -95,7 +93,7 @@ if __name__ == "__main__":
             "--channel-voltage",
             type=make_value_range_checker(0.000005, 0.1, "Channel Voltage"),
             default=0.05,
-            help=("The absolute voltage (in volts) to apply at the channel."))
+            help="The absolute voltage (in volts) to apply at the channel.")
         args = parser.parse_args()
         setup_logging(args.log_level, logger)
         return run_sweep(args)

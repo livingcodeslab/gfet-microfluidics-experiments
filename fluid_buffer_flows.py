@@ -3,7 +3,6 @@ fluid_buffer_flows: Attempt to detect change in fluid from a neutral buffer
 fluid to a reagent of interest.
 """
 import sys
-import time
 import logging
 from argparse import Namespace, ArgumentParser
 
@@ -25,14 +24,14 @@ def run_fluid_buffer_flows(mfd_port: serial.Serial) -> int:
     for _ in range(0, 5):
         # Inter-leave plugs of differerent concentrations a number of times.
         for chan in (PBS_0point0005X, PBS_0point001X):
-            PLUG_SIZE = 5
+            plug_size = 5
             logger.info("Collecting reagent %02d for %02d seconds.",
                         chan.value,
-                        PLUG_SIZE)
-            collect(mfd_port, chan, seconds=PLUG_SIZE)
+                        plug_size)
+            collect(mfd_port, chan, seconds=plug_size)
             logger.info("Buffering with %02d seconds long wash buffer",
-                        PLUG_SIZE*2)
-            wash_chip(mfd_port, seconds=(2 * PLUG_SIZE))
+                        plug_size*2)
+            wash_chip(mfd_port, seconds=2*plug_size)
 
     logger.info("Washing GFET line for %02d seconds.", 60)
     wash_chip(mfd_port, seconds=60)

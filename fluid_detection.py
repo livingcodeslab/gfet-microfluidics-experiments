@@ -21,7 +21,6 @@ from gdnasynth.microfluidics import (
     REAGENT_CHANNELS,
     cli_existing_channel,
     vent_chip2collection,
-    prime_wash_to_channel,
     prime_reagent_to_channel,
     reset_microfluidics_device,
     initialise_microfluidics_device)

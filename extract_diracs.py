@@ -16,9 +16,8 @@ ParsedLine = tuple[float, float, float, float, float, float, float]
 
 def raw_file_data(rawfile: Path) -> Iterator[str]:
     """Open the file and return the lines, one at a time."""
-    with rawfile.open(mode="r", encoding="utf8") as rawfile:
-        for line in rawfile:
-            yield line
+    with rawfile.open(mode="r", encoding="utf8") as rfile:
+        yield from rfile
 
 
 def parse_line(line: str) -> ParsedLine:
@@ -34,7 +33,7 @@ def group_sweeps(records: Iterator[dict[str, float]]) -> Iterator[
     _chunk = tuple()
     try:
         while True:
-            for i in range(0, chunksize):
+            for _i in range(0, chunksize):
                 _chunk = _chunk + (next(records),)
 
             yield _chunk
@@ -60,11 +59,12 @@ def extract_diracs(rawfile: Path):
     writer = csv.DictWriter(sys.stdout, fieldnames=headers)
     writer.writeheader()
     writer.writerows(diracs)
-        
+
 
 if __name__ == "__main__":
 
     def main():
+        "extract-diracs: Entry-point function."
         parser = cli_add_logging_arg(ArgumentParser(
             "extract-diracs",
             description="Extract lines with the dirac voltages from the raw data"))

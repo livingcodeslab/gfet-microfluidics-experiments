@@ -1,10 +1,12 @@
+"""Experiment to select the operating points for the S-20 chip."""
+
 import logging
 from pathlib import Path
 from argparse import Namespace, ArgumentParser
 
 from keithley2600 import Keithley2600
 
-from gdnasynth.keithley import connect, select_visa_address
+from gdnasynth.keithley import connect
 from gdnasynth.generic import (
     float_range,
     range_length,
@@ -67,9 +69,11 @@ def sweep_operating_points(inst: Keithley2600, args: Namespace):
 
 if __name__ == "__main__":
     def setup_logging(log_level: str):
+        """Set up the logging. Maybe use the common logging module?"""
         logger.setLevel(logging.getLevelNamesMapping()[log_level])
 
     def main():
+        """operating_points_selection: Entry-point function."""
         parser = ArgumentParser("Operating Points Selection")
         parser.add_argument(
             "visa_address",

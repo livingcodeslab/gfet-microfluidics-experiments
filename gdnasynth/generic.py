@@ -26,19 +26,18 @@ def float_range2(
 ) -> Iterator[float]:
     """Return `steps` equally-spaced values from `low` to `high`."""
     logger.debug("low: %s, high: %s, steps: %s", low, high, steps)
-    _diff = (high-low)
+    _diff = high-low
     for val in range(int(low), int(steps*_diff), int(_diff)):
         yield val/steps
 
 
 def build_filename(
         outdir: Path, file_prefix: str, index: int, total_files: int) -> Path:
+    """Build the filename from given fragments."""
     if not outdir.exists():
         outdir.mkdir()
 
-    padding = len(str(total_files))
-    if padding < 2:
-        padding = 2
+    padding = max(len(str(total_files)), 2)
 
     return outdir.joinpath(f"{file_prefix}_{index:0{padding}}.csv")
 
@@ -50,9 +49,7 @@ def range_length(the_range: Iterator[float]) -> tuple[tuple[float, ...], int]:
 
 
 def write_results(filepath: Path, results: tuple[dict, ...]):
-    # TODO: remove these debug statements
-    logger.debug("Fieldnames: %s", list(results[0].keys()))
-    # END: TODO: remove these debug statements
+    """Write results to a file."""
     with filepath.open("w") as outfile:
         writer = csv.DictWriter(outfile, fieldnames=list(results[0].keys()))
         writer.writeheader()

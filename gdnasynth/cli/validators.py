@@ -39,7 +39,7 @@ def existing_file(argvalue: str) -> Path:
     """Ensure that `argvalue` is an existing file."""
     _file = Path(argvalue)
     assert _file.exists() and _file.is_file(), (
-        "The path provided *MUST* exist and be a file.")
+        f"The path provided ({_file}) *MUST* exist and be a file.")
     return _file
 
 
@@ -47,5 +47,5 @@ def existing_directory(argvalue: Union[str, Path]) -> Path:
     """Ensure that `argvalue` is an existing directory."""
     _file = Path(argvalue)
     assert _file.exists() and _file.is_dir(), (
-        "The path provided *MUST* exist and be a directory.")
+        f"The path provided ({_file}) *MUST* exist and be a directory.")
     return _file

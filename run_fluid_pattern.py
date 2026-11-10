@@ -1,15 +1,16 @@
 """Script to run specific fluid patterns."""
 import time
-import serial
 import logging
 import argparse
 
-from gdnasynth.logging import set_loggers_level
+import serial
+
 from read_smu_continuously import print_line
-from microfluidics import (collect,
-                           Channel,
-                           REAGENT_CHANNELS,
-                           vent_chip2collection)
+from gdnasynth.logging import set_loggers_level
+from gdnasynth.microfluidics import (collect,
+                                     Channel,
+                                     REAGENT_CHANNELS,
+                                     vent_chip2collection)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(

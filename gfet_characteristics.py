@@ -1,27 +1,26 @@
 """GFET Characteristics code."""
-import csv
 import logging
 from pathlib import Path
 from argparse import Namespace, ArgumentParser
 
 from keithley2600 import Keithley2600
 
-from gdnasynth.cli import fetch_range_float
-from gdnasynth.keithley import connect, select_visa_address
+from gdnasynth.cli.validators import fetch_range_float
 from gdnasynth.generic import (
     float_range,
     range_length,
     write_results,
     build_filename)
 
+from gdnasynth.keithley import connect
 from gdnasynth.logging import set_loggers_level
 
-_module_name_ = __name__
+_MODULE_NAME = __name__
 logger = logging.getLogger(__name__)
-logHandler = logging.StreamHandler()
-logHandler.setFormatter(logging.Formatter(
+log_handler = logging.StreamHandler()
+log_handler.setFormatter(logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s — %(message)s"))
-logger.addHandler(logHandler)
+logger.addHandler(log_handler)
 logger.setLevel(logging.WARNING)
 
 
@@ -29,7 +28,8 @@ def perform_experiment(
         inst: Keithley2600,
         args: Namespace
 ):
-    # TODO: Do at least 3 readings for at least one of the FETs to stabilise the
+    """Run the `gfet_characteristics` experiment."""
+    # Do at least 3 readings for at least one of the FETs to stabilise the
     # chip.
     #
     # == Water Specifications ==
@@ -94,6 +94,7 @@ def perform_experiment(
 
 if __name__ == "__main__":
     def main():
+        "gfet_characteristics: Entry-point function."
         parser = ArgumentParser("GFET Characteristics")
         parser.add_argument(
             "visa_address",
@@ -133,9 +134,9 @@ if __name__ == "__main__":
         logger.setLevel(
             logging.getLevelNamesMapping()[args.log_level.upper()])
         set_loggers_level(
-            (_module_name_, "keithley2600.keithley_driver", "keithley_utils"),
+            (_MODULE_NAME, "keithley2600.keithley_driver", "keithley_utils"),
             logger.getEffectiveLevel())
-        logger.debug(f"ARGS: %s", args)
+        logger.debug("ARGS: %s", args)
         logger.info("Running with a range from %sV to %sV with a step of %s",
                     *args.range)
         return perform_experiment(connect(args.visa_address,

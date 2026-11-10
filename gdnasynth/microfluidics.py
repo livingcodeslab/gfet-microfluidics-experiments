@@ -28,7 +28,7 @@ REAGENT_CHANNELS = tuple(
 
 class CommandError(Exception):
     "Exception to raise in case of a command failure."
-    
+
 
 def send_and_wait_for_response(port, cmd: str, line_num: int = -1) -> bool:
     """Send a command and wait for the response."""
@@ -39,11 +39,11 @@ def send_and_wait_for_response(port, cmd: str, line_num: int = -1) -> bool:
     while True:
         response = port.readline().decode().strip()
         if response == "ERR":
-            raise Exception(
+            raise CommandError(
                 f"{line_num} | {response} | Error executing command "
                 f"('{_cmd!r}')")
         if response == "FIN":
-            logger.debug(f"{line_num} | Command executed successfully.")
+            logger.debug("%s | Command executed successfully.", line_num)
             break
 
         # Empty response
@@ -151,6 +151,7 @@ def initialise_microfluidics_device(
         mfd_port: serial.Serial,
         init_channels: tuple[Channel] = REAGENT_CHANNELS
 ):
+    """Initialise the microfluidics device."""
     logger.info("=== Initialise device ===")
     logger.info("Priming the wash line.")
     prime_wash_to_channel(mfd_port, Channel.WSHL)
@@ -159,7 +160,7 @@ def initialise_microfluidics_device(
 
     logger.info("Priming reagents to all channels")
     for chan in init_channels:
-        logger.debug(f"\tChannel {chan.value:02}")
+        logger.debug("\tChannel %02s", chan.value)
         prime_reagent_to_channel(mfd_port, chan)
 
     logger.info("Washing common line")

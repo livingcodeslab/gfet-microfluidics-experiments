@@ -12,7 +12,6 @@ import sys
 import csv
 import time
 import logging
-from pathlib import Path
 from typing import Callable, Iterator
 from argparse import Namespace, ArgumentParser, ArgumentDefaultsHelpFormatter
 

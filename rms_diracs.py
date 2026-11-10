@@ -30,6 +30,7 @@ def sqr(val: Union[int, float, complex]) -> Union[int, float, complex]:
 
 
 def compute_rms_gate_voltages(diracs_file: Path, window_size):
+    """Compute RMS for gate voltages."""
     diracs = tuple(read_file(diracs_file))
     length = len(diracs)
     windows = (

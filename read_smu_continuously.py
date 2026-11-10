@@ -1,8 +1,9 @@
+"""Read from the Source-Measure Unit (SMU) continuously."""
+
 import time
 import signal
 import logging
 import argparse
-from pathlib import Path
 
 from gdnasynth.graphenea import stabilise_chip
 from gdnasynth.keithley import initialise_smu
@@ -18,10 +19,11 @@ logging.basicConfig(
 __stop_running__ = False
 
 
-def sigterm_handler(signum, frame):
+def sigterm_handler(signum, _frame):
     """Handle a SIGTERM signal."""
-    global __stop_running__
-    logger.info("Received a termination signal, shutting down gracefully.")
+    global __stop_running__ # pylint: disable=[global-statement]
+    logger.info("Received a termination signal (%s), shutting down gracefully.",
+                signum)
     __stop_running__ = True
 
 

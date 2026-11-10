@@ -1,5 +1,4 @@
 """Library of common functions to Keithley device(s)."""
-import sys
 import time
 import logging
 from typing import cast
@@ -12,6 +11,7 @@ from keithley2600 import Keithley2600, KeithleyIOError
 logger = logging.getLogger(__name__)
 
 def select_visa_address() -> str:
+    """Select from a list of VISA addresses."""
     resources = pyvisa.ResourceManager().list_resources()
     print("The available VISA addresses are: ")
     for index, address in enumerate(resources):
@@ -63,7 +63,7 @@ def connect(
         return inst
 
     for retry in range(1, retries+1):
-        logger.warning(f"Reconnection attempt {retry}/{retries}")
+        logger.warning("Reconnection attempt %s/%s", retry, retries)
         if inst.connect():
             return inst
         time.sleep(seconds_between_retries)

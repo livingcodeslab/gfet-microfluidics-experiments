@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 #coding=utf-8
+"""Plot the GFET characteristic curve(s)"""
+
 import logging
 from pathlib import Path
 from argparse import Namespace, ArgumentParser
 
 from pygnuplot import gnuplot
 
-from gdnasynth.cli import fetch_range_float
+from gdnasynth.cli.validators import fetch_range_float
 from gdnasynth.generic import float_range, range_length, build_filename
 
 logging.basicConfig(
@@ -16,16 +18,19 @@ logger = logging.getLogger(__name__)
 
 
 def plot_files(args: Namespace):
+    """Plot the GFET characteristics."""
     g = gnuplot.Gnuplot(log=True)
 
     _ylabel = "R (KΩ)" if args.y_axis == "drain_resistance" else "I_D (A)"
 
     # Set plotting style
-    g.set(terminal='svg font "arial,10" fontscale 1.0 size 1200,1000 dynamic background rgb "white"',
+    g.set(terminal=('svg font "arial,10" fontscale 1.0 size 1200,1000 dynamic '
+                    'background rgb "white"'),
           #terminal='pngcairo font "arial,10" fontscale 1.0 size 1000, 800',
           # output='"testplot.1.png"',
           output=f'"{args.plot_filename}"',
-          key="fixed left top horizontal Right noreverse enhanced autotitle box lt black linewidth 1.000 dashtype solid",
+          key=("fixed left top horizontal Right noreverse enhanced autotitle "
+               "box lt black linewidth 1.000 dashtype solid"),
           # samples="50, 50",
           title=f'"{args.plot_title}" font ",20" textcolor lt -1 norotate',
           datafile='separator ","',
