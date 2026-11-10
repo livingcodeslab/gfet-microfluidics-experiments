@@ -49,6 +49,7 @@ from gdnasynth.graphenea import stabilise_chip
 from gdnasynth.generic import float_range
 from gdnasynth.keithley import initialise_smu
 from gdnasynth.logging import setup_logging
+from gdnasynth.ot2r import labware_definition_path
 from gdnasynth.ot2r.commands.runs.runs import (add_labware_definition, aspirate,
                                                create_run, delete_run,
                                                dispense, get_run, home,
@@ -71,7 +72,8 @@ SMU_LINE_FREQUENCY = 60  # Hz
 SMU_NPLC = 12.5005
 
 # --- deck --------------------------------------------------------------------
-DEFINITION = Path("OT2_labware_definition_graphenea_card.json")
+DEFINITION = labware_definition_path(
+    "OT2_labware_definition_graphenea_card.json")
 PIPETTE = Pipette(
     pipette_name="p20_single_gen2", mount="left",
     pipette_id=uuid.UUID("7806a233-8012-4d99-8887-970935f103e1"))
