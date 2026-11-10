@@ -1,7 +1,13 @@
-"""Tests for the SMU initialisation helper."""
+"""Tests for the SMU initialisation helper and its connection probe."""
 from types import SimpleNamespace
 
+import pytest
+import serial
+from keithley2600 import KeithleyIOError
+
 import gdnasynth.keithley as keithley
+
+KEITHLEY_IDN = "Keithley Instruments, Model 2602B, 4616013, 1.7.5a"
 
 
 class _Source:
@@ -57,7 +63,56 @@ class _FakeKeithley:
         return False
 
 
+class _FakeResource:
+    """Stand-in for a pyvisa resource, used to exercise the probe."""
+
+    def __init__(self, identity=None, query_error=None):
+        self.identity = identity
+        self.query_error = query_error
+        self.read_termination = None
+        self.closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        self.close()
+
+    def query(self, command):
+        if self.query_error is not None:
+            raise self.query_error
+        return self.identity
+
+    def close(self):
+        self.closed = True
+
+
+class _FakeResourceManager:
+    """Stand-in for pyvisa.ResourceManager."""
+
+    def __init__(self, resource=None, open_error=None):
+        self.resource = resource if resource is not None else _FakeResource()
+        self.open_error = open_error
+        self.opened = []
+
+    def open_resource(self, address):
+        self.opened.append(address)
+        if self.open_error is not None:
+            raise self.open_error
+        return self.resource
+
+
+def _patch_pyvisa(monkeypatch, resource=None, open_error=None):
+    """Stub out pyvisa's ResourceManager with a fake one."""
+    manager = _FakeResourceManager(resource, open_error)
+    monkeypatch.setattr(keithley.pyvisa, "ResourceManager", lambda: manager)
+    return manager
+
+
 def _patch_keithley(monkeypatch, connected=True):
+    """Stub out the probe, the driver, and the retry delay."""
+    monkeypatch.setattr(keithley, "_probe_keithley", lambda address: None)
+    monkeypatch.setattr(keithley.time, "sleep", lambda seconds: None)
     created = {}
 
     def fake_keithley(visa_address, raise_keithley_errors=False):
@@ -113,12 +168,78 @@ def test_initialise_smu_raises_when_the_device_does_not_connect(monkeypatch):
     WHEN: initialise_smu(...) is called
     THEN: KeithleyIOError is raised, naming the VISA resource
     """
-    import pytest
-    from keithley2600 import KeithleyIOError
-
     _patch_keithley(monkeypatch, connected=False)
 
     with pytest.raises(KeithleyIOError) as excinfo:
         keithley.initialise_smu("ASRL/dev/ttyUSB0::INSTR", 60, 1.0)
 
     assert "ASRL/dev/ttyUSB0::INSTR" in str(excinfo.value)
+
+
+def test_probe_accepts_a_keithley_instrument(monkeypatch):
+    """Test that the probe accepts a Keithley and leaves a clean handle.
+
+    GIVEN: a resource that identifies as a Keithley
+    WHEN: _probe_keithley(...) is called
+    THEN: the address is opened, the read terminator is set, and the resource is
+          closed again
+    """
+    resource = _FakeResource(identity=KEITHLEY_IDN)
+    manager = _patch_pyvisa(monkeypatch, resource=resource)
+
+    keithley._probe_keithley("ASRL/dev/ttyUSB0::INSTR")
+
+    assert manager.opened == ["ASRL/dev/ttyUSB0::INSTR"]
+    assert resource.read_termination == "\n"
+    assert resource.closed is True
+
+
+def test_probe_rejects_a_non_keithley_instrument(monkeypatch):
+    """Test that a wrong device on the port is reported.
+
+    GIVEN: a resource that identifies as something other than a Keithley
+    WHEN: _probe_keithley(...) is called
+    THEN: KeithleyIOError is raised, naming what was found
+    """
+    resource = _FakeResource(identity="Acme Pump, Model 3000, 1, 2")
+    _patch_pyvisa(monkeypatch, resource=resource)
+
+    with pytest.raises(KeithleyIOError) as excinfo:
+        keithley._probe_keithley("ASRL/dev/ttyUSB0::INSTR")
+
+    assert "Acme Pump" in str(excinfo.value)
+    assert resource.closed is True
+
+
+def test_probe_lets_a_visa_error_propagate(monkeypatch):
+    """Test that VISA-level failures are not swallowed.
+
+    GIVEN: a resource whose identity query times out
+    WHEN: _probe_keithley(...) is called
+    THEN: the pyvisa VisaIOError propagates
+    """
+    import pyvisa
+
+    error = pyvisa.errors.VisaIOError(
+        pyvisa.constants.StatusCode.error_timeout)
+    resource = _FakeResource(query_error=error)
+    _patch_pyvisa(monkeypatch, resource=resource)
+
+    with pytest.raises(pyvisa.errors.VisaIOError):
+        keithley._probe_keithley("ASRL/dev/ttyUSB0::INSTR")
+
+    assert resource.closed is True
+
+
+def test_probe_lets_a_serial_error_propagate(monkeypatch):
+    """Test that backend serial failures are not swallowed.
+
+    GIVEN: a resource that cannot be opened (e.g. permission denied)
+    WHEN: _probe_keithley(...) is called
+    THEN: the pyserial SerialException propagates
+    """
+    _patch_pyvisa(monkeypatch,
+                  open_error=serial.SerialException(13, "Permission denied"))
+
+    with pytest.raises(serial.SerialException):
+        keithley._probe_keithley("ASRL/dev/ttyUSB0::INSTR")
