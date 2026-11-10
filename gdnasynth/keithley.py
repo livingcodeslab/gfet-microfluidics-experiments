@@ -2,8 +2,10 @@
 import sys
 import time
 import logging
+from typing import cast
 
 import pyvisa
+from pyvisa.resources import MessageBasedResource
 
 from keithley2600 import Keithley2600, KeithleyIOError
 
@@ -23,6 +25,30 @@ def select_visa_address() -> str:
               f"Expected a number between 0 and {len(resources) -1} inclusive")
         return ""
 
+def _probe_keithley(visa_address: str) -> None:
+    """Probe Keithley device directly to surface permission errors/busy device.
+
+    The keithley2600 driver hides the reason why a connection fails. This forces
+    an exception to be raised in case the user does not have appropriate
+    permissions or the device is busy.
+
+    :param visa_address: The VISA address to the device you wish to connect to
+    :type visa_address: str
+
+    :raises keithley2600.KeithleyIOError when connection is made to non-keithley
+            device
+    :raises serial.SerialException propagated from pyvisa
+    :raises pyvisa.VisaIOError propagated from pyvisa
+    """
+    with cast(MessageBasedResource,
+              pyvisa.ResourceManager().open_resource(visa_address)) as rsc:
+        rsc.read_termination = "\n"
+        identity = rsc.query("*IDN?").strip()
+        logger.info("Found: %s", identity)
+        if not identity.startswith("Keithley Instruments,"):
+            raise KeithleyIOError(f"Not a Keithley instrument: '{identity}'!")
+
+
 def connect(
         visa_address: str,
         retries: int = 10,
@@ -30,14 +56,14 @@ def connect(
         raise_keithley_errors: bool = False
 ) -> Keithley2600:
     """Connect to a Keithley2600 device via the LAN cable."""
-    # The constructor calls the `connect()` function
+    _probe_keithley(visa_address)
     inst = Keithley2600(visa_address,
                         raise_keithley_errors=raise_keithley_errors)
     if inst.connected:
         return inst
 
     for retry in range(1, retries+1):
-        logger.info(f"Connection attempt {retry}/{retries}")
+        logger.warning(f"Reconnection attempt {retry}/{retries}")
         if inst.connect():
             return inst
         time.sleep(seconds_between_retries)
